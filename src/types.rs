@@ -13,7 +13,7 @@ pub type IPLfloat32 = libc::c_float;
 pub type IPLfloat64 = libc::c_double;
 pub type IPLbyte = libc::c_uchar;
 pub type IPLsize = usize;
-pub type IPLstring = *mut libc::c_char;
+pub type IPLstring = *const libc::c_char;
 
 /// An opaque handle to a Phonon API object. A variable of this type may not be cast to a pointer to any other
 /// API type.
