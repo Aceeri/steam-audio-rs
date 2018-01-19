@@ -42,7 +42,7 @@ c_enum! {
 ///
 /// \param  message     The message to log.
 ///
-pub type IPLLogFunction = extern "C" fn(*mut libc::c_char);
+pub type IPLLogFunction = extern "C" fn(*const libc::c_char);
 
 /// Prototype of a callback that allocates memory. This is usually specified to let Phonon use a custom memory
 /// allocator. The default behavior is to use the OS-dependent aligned version of \c malloc.

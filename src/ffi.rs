@@ -278,7 +278,7 @@ extern "C" {
     pub fn iplLoadFinalizedScene(
         context: IPLhandle,
         simulationSettings: IPLSimulationSettings,
-        data: *mut IPLbyte,
+        data: *const IPLbyte,
         size: IPLint32,
         computeDevice: IPLhandle,
         progressCallback: IPLLoadSceneProgressCallback,
