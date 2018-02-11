@@ -10,9 +10,11 @@ use std::mem;
 fn main() {
     let mut context: ffi::IPLhandle = unsafe { mem::zeroed() };
 
+    use ffi::IPLerror::*;
+
     match unsafe { ffi::iplCreateContext(None, None, None, &mut context) } {
-        ffi::IPLerror_IPL_STATUS_SUCCESS => eprintln!("Successfully created context"),
-        err @ _ => panic!("Error creating context ({})", err),
+        IPL_STATUS_SUCCESS => eprintln!("Successfully created context"),
+        err @ _ => panic!("Error creating context ({:?})", err),
     }
 
     unsafe {
