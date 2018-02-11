@@ -4,4 +4,3 @@
 Cargo.lock
 *.swp
 lib/
-build.rs
