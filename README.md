@@ -6,5 +6,5 @@
 ## Usage
 ```toml
 [dependencies]
-steam-audio = "0.2.2"
+steam-audio = "0.2.3"
 ```
