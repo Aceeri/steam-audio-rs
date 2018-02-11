@@ -6,7 +6,7 @@ description = "Rust bindings for Valve Software's binaural audio rendering libra
 repository = "https://github.com/germangb/steam-audio-rs.git"
 readme = "README.md"
 keywords = ["steam", "audio", "vr", "binaural", "gamedev"]
-categories = ["multimedia::audio", "games", "development-tools::ffi", "simulation"]
+categories = ["multimedia::audio", "games", "simulation"]
 license-file = "LICENSE.md"
 
 [dependencies]
