@@ -2,13 +2,14 @@
 name = "steam-audio-sys"
 version = "0.1.0"
 authors = ["germän gômez <germangb42@gmail.com>"]
-description = "Unofficial Rust bindings for Valve Software's binaural audio rendering library."
+description = "Rust bindings for Valve Software's binaural audio rendering library."
 repository = "https://github.com/germangb/steam-audio-sys.git"
 readme = "README.md"
 keywords = ["steam", "audio", "vr", "binaural", "gamedev"]
 categories = ["multimedia::audio", "games", "development-tools::ffi", "simulation"]
 license-file = "LICENSE.md"
 
-
 [dependencies]
-libc = "0.2"
+
+[build-dependencies]
+bindgen = "0.32.3"

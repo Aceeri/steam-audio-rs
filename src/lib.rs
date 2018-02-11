@@ -1,5 +1,1 @@
-#[macro_use]
-mod macros;
-
-pub mod ffi;
-pub mod types;
+include!(concat!(env!("OUT_DIR"), "/bindgen.rs"));
