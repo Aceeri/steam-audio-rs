@@ -1,6 +1,6 @@
 [package]
 name = "steam-audio"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["germän gômez <germangb42@gmail.com>"]
 description = "Rust bindings for Valve Software's binaural audio rendering library."
 repository = "https://github.com/germangb/steam-audio-rs.git"
