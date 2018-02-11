@@ -1,6 +1,6 @@
 # Steam Audio bindings for Rust
 
-[![Cargo package](https://img.shields.io/crates/v/steam-audio.svg)](https://crates.io/crates/steam-audio-sys)
+[![Cargo package](https://img.shields.io/crates/v/steam-audio.svg)](https://crates.io/crates/steam-audio)
 
 ## Usage
 ```toml
