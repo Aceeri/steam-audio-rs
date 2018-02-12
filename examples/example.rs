@@ -10,7 +10,7 @@ use steam_audio::ffi::*;
 use std::{ptr, slice};
 use std::ffi::CString;
             
-static BIN_DATA: &[u8] = include_bytes!("../assets/scene.bin");
+static BIN_DATA: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/scene.bin"));
 
 static SIM_SETTINGS: IPLSimulationSettings = IPLSimulationSettings {
     sceneType: IPLSceneType::IPL_SCENETYPE_PHONON,
