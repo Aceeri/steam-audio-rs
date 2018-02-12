@@ -6,9 +6,9 @@ use std::env;
 use std::path::Path;
 
 fn main() {
-    //for (var, value) in env::vars() {
-        //eprintln!("{var}={value}", var=var, value=value);
-    //}
+    for (var, value) in env::vars() {
+        eprintln!("{var}={value}", var=var, value=value);
+    }
 
     println!("cargo:rustc-link-lib=dylib=phonon");
 
