@@ -19,7 +19,6 @@ fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("bindgen.rs");
 
-
     let bindings = builder.generate().unwrap();
     bindings.write_to_file(&dest_path).unwrap();
 
