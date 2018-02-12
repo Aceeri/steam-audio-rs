@@ -11,8 +11,8 @@ license-file = "LICENSE.md"
 exclude = ["scene/*", "src/main.rs"]
 
 [dependencies]
-glfw = "0.20.0"
-gl = "0.10.0"
+#glfw = "0.20.0"
+#gl = "0.10.0"
 
 [build-dependencies]
 bindgen = "0.32.3"

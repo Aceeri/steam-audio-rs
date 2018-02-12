@@ -5,110 +5,84 @@ extern crate steam_audio;
 extern crate gl;
 extern crate glfw;
 
-use steam_audio::ffi;
-use steam_audio::ffi::IPLSceneType;
+use steam_audio::ffi::*;
 
-
-//use std::mem;
-use std::ptr;
+use std::{ptr, slice};
 use std::ffi::CString;
-
-// for reading geometry
-use std::slice;
-use std::mem;
             
 static BIN_DATA: &[u8] = include_bytes!("../assets/scene.bin");
 
+static SIM_SETTINGS: IPLSimulationSettings = IPLSimulationSettings {
+    sceneType: IPLSceneType::IPL_SCENETYPE_PHONON,
+    numRays: 2048,
+    numDiffuseSamples: 512,
+    numBounces: 16,
+    irDuration: 1.5,
+    ambisonicsOrder: 2,
+    maxConvolutionSources: 4,
+};
+
+static DEVICE_FILTER: IPLComputeDeviceFilter = IPLComputeDeviceFilter {
+    type_: IPLComputeDeviceType::IPL_COMPUTEDEVICE_CPU,
+    requiresTrueAudioNext: IPLbool::IPL_FALSE,
+    minReservableCUs: 0,
+    maxCUsToReserve: 32,
+};
 
 fn main() {
-    let mut context: ffi::IPLhandle = ptr::null_mut();
-
-    use ffi::IPLerror::*;
-
-    unsafe {
-        assert_eq!(IPL_STATUS_SUCCESS, ffi::iplCreateContext(None, None, None, &mut context));
-    }
-
-    eprintln!("context={:?}", context);
-
-    // create compute device
-    let mut device: ffi::IPLhandle = ptr::null_mut();
-    let filter = ffi::IPLComputeDeviceFilter {
-        type_: ffi::IPLComputeDeviceType::IPL_COMPUTEDEVICE_CPU,
-        requiresTrueAudioNext: ffi::IPLbool::IPL_FALSE,
-        minReservableCUs: 0,
-        maxCUsToReserve: 32,
+    let mut context = unsafe {
+        let mut context = ptr::null_mut();
+        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateContext(None, None, None, &mut context));
+        context
     };
 
-    unsafe {
-        assert_eq!(IPL_STATUS_SUCCESS, ffi::iplCreateComputeDevice(context, filter, &mut device));
-    }
-
-    eprintln!("device={:?}", device);
-
-    let mut scene: ffi::IPLhandle = ptr::null_mut();
-    let sim_settings = ffi::IPLSimulationSettings {
-        sceneType: IPLSceneType::IPL_SCENETYPE_PHONON,
-        numRays: 2048,
-        numDiffuseSamples: 512,
-        numBounces: 16,
-        irDuration: 1.5,
-        ambisonicsOrder: 2,
-        maxConvolutionSources: 4,
+    let mut device: IPLhandle = unsafe {
+        let mut device = ptr::null_mut();
+        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateComputeDevice(context, DEVICE_FILTER, &mut device));
+        device
     };
 
-    unsafe {
-        assert_eq!(IPL_STATUS_SUCCESS, ffi::iplCreateScene(context, device, sim_settings, 1, &mut scene));
-    }
+    let mut scene = unsafe {
+        let mut scene: IPLhandle = ptr::null_mut();
+        let mut mesh: IPLhandle = ptr::null_mut();
 
-    let mut mesh: ffi::IPLhandle = ptr::null_mut();
-    unsafe {
-        const NUM_TRIS: ffi::IPLint32 = 28;
-        const NUM_VERTS: ffi::IPLint32 = 48;
+        const NUM_TRIS: IPLint32 = 28;
+        const NUM_VERTS: IPLint32 = 48;
 
-        assert_eq!(IPL_STATUS_SUCCESS, ffi::iplCreateStaticMesh(scene, NUM_VERTS, NUM_TRIS, &mut mesh));
+        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateScene(context, device, SIM_SETTINGS, 1, &mut scene));
+        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateStaticMesh(scene, NUM_VERTS, NUM_TRIS, &mut mesh));
 
-        // read serialized triangles
-        let tris = {
-            let data = &BIN_DATA[..336];
-            slice::from_raw_parts_mut(data.as_ptr() as *mut ffi::IPLTriangle, mem::size_of::<ffi::IPLTriangle>() * NUM_TRIS as usize)
-        };
+        let tris: &mut [IPLTriangle] = slice::from_raw_parts_mut(BIN_DATA.as_ptr() as _, 336);
+        let vert: &mut [IPLVector3] = slice::from_raw_parts_mut(BIN_DATA.as_ptr().offset(336) as _, 576);
 
-        let verts = {
-            let data = &BIN_DATA[336..];
-            slice::from_raw_parts_mut(data.as_ptr() as *mut ffi::IPLVector3, mem::size_of::<ffi::IPLVector3>() * NUM_VERTS as usize)
-        };
-        
-        ffi::iplSetStaticMeshVertices(scene, mesh, verts.as_mut_ptr());
-        ffi::iplSetStaticMeshTriangles(scene, mesh, tris.as_mut_ptr());
-        ffi::iplFinalizeScene(scene, None);
-    }
+        iplSetStaticMeshVertices(scene, mesh, vert.as_mut_ptr());
+        iplSetStaticMeshTriangles(scene, mesh, tris.as_mut_ptr());
 
-    // dump debug scene
+        iplFinalizeScene(scene, None);
+        scene
+    };
+
     unsafe {
         let file = CString::new("scene/scene.obj").unwrap();
-        ffi::iplDumpSceneToObjFile(scene, file.into_raw());
+        iplDumpSceneToObjFile(scene, file.into_raw());
     }
 
+    let mut env = unsafe {
+        let mut env = ptr::null_mut();
+        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateEnvironment(context, device, SIM_SETTINGS, scene, ptr::null_mut(), &mut env));
+        env
+    };
+
+    eprintln!("context={:?}", context);
+    eprintln!("device={:?}", device);
     eprintln!("scene={:?}", scene);
-
-    // environment
-    let mut env: ffi::IPLhandle = ptr::null_mut();
-
-    unsafe {
-        assert_eq!(
-            IPL_STATUS_SUCCESS,
-            ffi::iplCreateEnvironment(context, device, sim_settings, scene, ptr::null_mut(), &mut env)
-        );
-    }
-
     eprintln!("env={:?}", env);
     
     unsafe {
-        ffi::iplDestroyEnvironment(&mut env);
-        ffi::iplDestroyScene(&mut scene);
-        ffi::iplDestroyComputeDevice(&mut device);
-        ffi::iplDestroyContext(&mut context);
-        ffi::iplCleanup();
+        iplDestroyEnvironment(&mut env);
+        iplDestroyScene(&mut scene);
+        iplDestroyComputeDevice(&mut device);
+        iplDestroyContext(&mut context);
+        iplCleanup();
     }
 }
