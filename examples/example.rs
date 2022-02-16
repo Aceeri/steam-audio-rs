@@ -158,13 +158,17 @@ fn main() {
     eprintln!("device={:?}", device);
     eprintln!("scene={:?}", scene);
     eprintln!("env={:?}", env);
+    */
 
     unsafe {
+        /*
         iplDestroyEnvironment(&mut env);
         iplDestroyScene(&mut scene);
         iplDestroyComputeDevice(&mut device);
         iplDestroyContext(&mut context);
         iplCleanup();
+        */
+
+        iplContextRelease(&mut context);
     }
-    */
 }
