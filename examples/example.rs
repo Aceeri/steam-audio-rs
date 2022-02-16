@@ -1,16 +1,17 @@
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
-extern crate steam_audio;
 extern crate gl;
 extern crate glfw;
+extern crate steam_audio;
 
 use steam_audio::ffi::*;
 
+use std::ffi::{CString, CStr};
+use std::os::raw::c_char;
 use std::ptr::addr_of_mut;
 use std::{ptr, slice};
-use std::ffi::CString;
-            
+
 static BIN_DATA: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/scene.bin"));
 
 /*
@@ -31,7 +32,6 @@ static DEVICE_FILTER: IPLComputeDeviceFilter = IPLComputeDeviceFilter {
     maxCUsToReserve: 32,
 };
 */
-
 
 /*
 pub struct IPLContextSettings {
@@ -56,17 +56,28 @@ pub struct IPLContextSettings {
 }
 */
 
+unsafe extern "C" fn log_callback(level: IPLLogLevel, message: *const ::std::os::raw::c_char) {
+    let c_str: &CStr = CStr::from_ptr(message);
+    let str = c_str.to_str().unwrap();
+    eprintln!("{:?}: {}", level, str);
+}
+
 fn main() {
     let mut context = unsafe {
-        let context: *mut IPLContext = ptr::null_mut();
-        let settings = IPLContextSettings {
-            version: STEAMAUDIO_VERSION_MAJOR << 16 | STEAMAUDIO_VERSION_MINOR << 8 | STEAMAUDIO_VERSION_PATCH,
-            logCallback: None,
+        let mut context = ptr::null_mut();
+        let mut settings = IPLContextSettings {
+            version: STEAMAUDIO_VERSION_MAJOR << 16
+                | STEAMAUDIO_VERSION_MINOR << 8
+                | STEAMAUDIO_VERSION_PATCH,
+            logCallback: Some(log_callback),
             allocateCallback: None,
             simdLevel: IPLSIMDLevel::IPL_SIMDLEVEL_AVX512,
             freeCallback: None,
         };
-        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplContextCreate(&settings as *const _ as *mut _, &context as *const _ as *mut _));
+        assert_eq!(
+            IPLerror::IPL_STATUS_SUCCESS,
+            iplContextCreate(&mut settings, &mut context)
+        );
         context
     };
 
@@ -77,20 +88,33 @@ fn main() {
         frameSize: 1024,
     };
 
+    let file = CString::new("").unwrap();
     let hrtf = unsafe {
-        let mut hrtf: *mut IPLHRTF = ptr::null_mut();
+        let mut hrtf = ptr::null_mut();
         let mut hrtf_settings = IPLHRTFSettings {
             type_: IPLHRTFType::IPL_HRTFTYPE_DEFAULT,
-            sofaFileName: ptr::null(),
+            sofaFileName: file.as_ptr() as *const c_char,
         };
 
-        dbg!();
+        println!("{:?}", hrtf);
+        println!("{:?}", hrtf_settings);
+        println!("{:?}", audio_settings);
+        dbg!(context);
         dbg!(*context);
-        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplHRTFCreate(*context, &audio_settings as *const _ as *mut _, &hrtf_settings as *const _ as *mut _, &hrtf as *const _ as *mut _));
-        dbg!();
+        assert_eq!(
+            IPLerror::IPL_STATUS_SUCCESS,
+            iplHRTFCreate(
+                context,
+                &mut audio_settings,
+                &mut hrtf_settings,
+                &mut hrtf,
+            )
+        );
+        hrtf
     };
 
-    println!("{:?}", hrtf);
+    dbg!(hrtf);
+
 
     /*
     let mut device = unsafe {
@@ -134,7 +158,7 @@ fn main() {
     eprintln!("device={:?}", device);
     eprintln!("scene={:?}", scene);
     eprintln!("env={:?}", env);
-    
+
     unsafe {
         iplDestroyEnvironment(&mut env);
         iplDestroyScene(&mut scene);
