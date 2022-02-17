@@ -1,4 +1,3 @@
-
 extern crate lewton;
 extern crate steam_audio_sys;
 
@@ -71,10 +70,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let context = Context::new(ContextSettings::default())?;
     let audio_settings = AudioSettings::default();
     let hrtf_settings = HRTFSettings::default();
-    let hrtf = HRTF::new(&context,  &audio_settings, &hrtf_settings)?;
+    let hrtf = HRTF::new(&context, &audio_settings, &hrtf_settings)?;
 
     let mut audio_buffer = get_audio()?;
-    let mut input = InputAudioInformation::from_pcm_data((&audio_settings).into(), audio_buffer).unwrap();
+    let mut input =
+        InputAudioInformation::from_pcm_data((&audio_settings).into(), audio_buffer).unwrap();
 
     /*
     {

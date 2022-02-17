@@ -1,6 +1,6 @@
 use std::ffi::CString;
 
-use crate::{context::Context};
+use crate::context::Context;
 
 use steam_audio_sys::ffi;
 

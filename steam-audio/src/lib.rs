@@ -1,7 +1,7 @@
+pub mod audio_buffer;
 pub mod context;
 pub mod error;
 pub mod hrtf;
-pub mod audio_buffer;
 
 pub mod prelude {
     pub use crate::context::{Context, ContextSettings};

@@ -20,4 +20,4 @@ impl std::fmt::Display for SteamAudioError {
     }
 }
 
-impl std::error::Error for SteamAudioError { }
+impl std::error::Error for SteamAudioError {}
