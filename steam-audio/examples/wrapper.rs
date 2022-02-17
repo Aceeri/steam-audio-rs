@@ -2,52 +2,11 @@ extern crate lewton;
 extern crate steam_audio_sys;
 
 use glam::Vec3;
-use lewton::inside_ogg::{read_headers, OggStreamReader};
-use steam_audio::effect::binaural::{BinauralEffect, HRTFInterpolation, BinauralParams};
-use steam_audio_sys::ffi::*;
+use lewton::inside_ogg::OggStreamReader;
+use steam_audio::prelude::*;
 
 use std::error::Error;
-use std::ffi::{CStr, CString};
 use std::fs::File;
-use std::os::raw::c_char;
-use std::ptr::addr_of_mut;
-use std::{ptr, slice};
-
-#[derive(Debug)]
-struct InputAudioInformation {
-    data: Vec<f32>,
-    outer: Vec<*mut f32>,
-    frames: usize,
-    frame_size: usize,
-    buffer: IPLAudioBuffer,
-}
-
-impl InputAudioInformation {
-    fn from_pcm_data(
-        settings: IPLAudioSettings,
-        mut data: Vec<f32>,
-    ) -> Result<Self, Box<dyn Error>> {
-        let frames = data.len() / settings.frameSize as usize;
-
-        let buffer = IPLAudioBuffer {
-            numChannels: 1,
-            numSamples: settings.frameSize,
-            data: ptr::null_mut(),
-        };
-
-        let mut input = Self {
-            data,
-            frames,
-            frame_size: settings.frameSize as usize,
-            buffer,
-            outer: Vec::new(),
-        };
-        input.outer.push(input.data.as_mut_ptr());
-        input.buffer.data = input.outer.as_mut_ptr();
-
-        Ok(input)
-    }
-}
 
 fn get_audio() -> Result<Vec<f32>, Box<dyn Error>> {
     let file = File::open("assets/eduardo.ogg")?;
@@ -66,8 +25,6 @@ fn vf_to_u8(v: &[f32]) -> &[u8] {
     unsafe { std::slice::from_raw_parts(v.as_ptr() as *const u8, v.len() * 4) }
 }
 
-use steam_audio::prelude::*;
-
 fn main() -> Result<(), Box<dyn Error>> {
     let context = Context::new(ContextSettings::default())?;
     let audio_settings = AudioSettings::default();
@@ -82,14 +39,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut output_buffer = AudioBuffer::frame_buffer_with_channels(&audio_settings, 2);
 
     let binaural_effect = BinauralEffect::new(&context, &audio_settings, &hrtf)?;
-    for (frame_index, frame) in audio_buffer.into_iter().enumerate(){
+    for (frame_index, frame) in audio_buffer.into_iter().enumerate() {
         let time = (frame_index as f32 / frame_length as f32) * std::f32::consts::TAU;
 
         let mut params = BinauralParams::default();
         params.interpolation = HRTFInterpolation::Bilinear;
         params.direction = Vec3::new(time.cos(), time.sin(), 1.0 - time.cos());
 
-        binaural_effect.apply_step_with_buffer(&audio_settings, &params, frame, &mut output_buffer)?;
+        binaural_effect.apply_step_with_buffer(&params, frame, &mut output_buffer)?;
 
         for (channel, output) in output_buffer.data.iter().zip(output.iter_mut()) {
             output.extend(channel);
@@ -109,8 +66,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     use std::io::Write;
-    let mut file = File::create("eduardo_wrapper_binaural.raw").unwrap();
-    file.write(vf_to_u8(&output_interleaved)).unwrap();
+    let mut file = File::create("eduardo_wrapper_binaural.raw")?;
+    file.write(vf_to_u8(&output_interleaved))?;
 
     Ok(())
 }

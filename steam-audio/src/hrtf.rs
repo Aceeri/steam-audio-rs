@@ -6,6 +6,21 @@ use steam_audio_sys::ffi;
 
 use crate::error::SteamAudioError;
 
+#[derive(Copy, Clone)]
+pub enum HRTFInterpolation {
+    NearestNeighbor,
+    Bilinear,
+}
+
+impl Into<ffi::IPLHRTFInterpolation> for HRTFInterpolation {
+    fn into(self) -> ffi::IPLHRTFInterpolation {
+        match self {
+            Self::NearestNeighbor => ffi::IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_BILINEAR,
+            Self::Bilinear => ffi::IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_BILINEAR,
+        }
+    }
+}
+
 pub enum HRTFSettings {
     Default,
     SOFA(String),

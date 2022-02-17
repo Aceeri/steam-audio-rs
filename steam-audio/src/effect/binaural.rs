@@ -1,25 +1,11 @@
-
 use steam_audio_sys::ffi;
 
 use crate::{
+    audio_buffer::{AudioBufferFrame, AudioBufferIterator},
     error::SteamAudioError,
-    prelude::{AudioBuffer, AudioSettings, Context, HRTF}, audio_buffer::{AudioBufferIterator, AudioBufferFrame},
+    hrtf::HRTFInterpolation,
+    prelude::{AudioBuffer, AudioSettings, Context, HRTF},
 };
-
-#[derive(Copy, Clone)]
-pub enum HRTFInterpolation {
-    NearestNeighbor,
-    Bilinear,
-}
-
-impl Into<ffi::IPLHRTFInterpolation> for HRTFInterpolation {
-    fn into(self) -> ffi::IPLHRTFInterpolation {
-        match self {
-            Self::NearestNeighbor => ffi::IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_BILINEAR,
-            Self::Bilinear => ffi::IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_BILINEAR,
-        }
-    }
-}
 
 pub struct BinauralParams {
     pub direction: glam::Vec3,
@@ -85,13 +71,17 @@ impl BinauralEffect {
         self.inner
     }
 
-    pub fn apply_step_with_buffer(&self, audio_settings: &AudioSettings, params: &BinauralParams, mut frame: AudioBufferFrame, output_buffer: &mut AudioBuffer) -> Result<(), SteamAudioError> {
+    pub fn apply_step_with_buffer(
+        &self,
+        params: &BinauralParams,
+        mut frame: AudioBufferFrame,
+        output_buffer: &mut AudioBuffer,
+    ) -> Result<(), SteamAudioError> {
         let mut output_ffi_buffer = unsafe { output_buffer.ffi_buffer_null() };
         let mut data_ptrs = unsafe { output_buffer.data_ptrs() };
         output_ffi_buffer.data = data_ptrs.as_mut_ptr();
 
         let mut ipl_params = params.merge(self.hrtf);
-
 
         unsafe {
             let effect = ffi::iplBinauralEffectApply(
@@ -105,9 +95,14 @@ impl BinauralEffect {
         Ok(())
     }
 
-    pub fn apply_step(&self, audio_settings: &AudioSettings, params: &BinauralParams, mut frame: AudioBufferFrame) -> Result<AudioBuffer, SteamAudioError> {
+    pub fn apply_step(
+        &self,
+        audio_settings: &AudioSettings,
+        params: &BinauralParams,
+        mut frame: AudioBufferFrame,
+    ) -> Result<AudioBuffer, SteamAudioError> {
         let mut output_buffer = AudioBuffer::frame_buffer_with_channels(audio_settings, 2);
-        self.apply_step_with_buffer(audio_settings, params, frame, &mut output_buffer)?;
+        self.apply_step_with_buffer(params, frame, &mut output_buffer)?;
         Ok(output_buffer)
     }
 }
