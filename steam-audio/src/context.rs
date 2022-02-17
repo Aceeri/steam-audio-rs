@@ -1,9 +1,8 @@
-
 use std::ffi::CStr;
 
 use steam_audio_sys::ffi;
 
-use crate::{refcount::RefCounted, error::SteamAudioError};
+use crate::{error::SteamAudioError};
 
 #[derive(Debug, Default)]
 pub struct ContextSettings {
@@ -23,7 +22,9 @@ impl Into<ffi::IPLContextSettings> for ContextSettings {
             version: self.version.unwrap_or(ffi::STEAMAUDIO_VERSION),
             logCallback: Some(log_callback),
             allocateCallback: None,
-            simdLevel: self.simd_level.unwrap_or(ffi::IPLSIMDLevel::IPL_SIMDLEVEL_AVX512),
+            simdLevel: self
+                .simd_level
+                .unwrap_or(ffi::IPLSIMDLevel::IPL_SIMDLEVEL_AVX512),
             freeCallback: None,
         }
     }
@@ -31,7 +32,7 @@ impl Into<ffi::IPLContextSettings> for ContextSettings {
 pub struct Context(ffi::IPLContext);
 
 impl Context {
-    fn new(settings: ContextSettings) -> Result<Self, SteamAudioError> {
+    pub fn new(settings: ContextSettings) -> Result<Self, SteamAudioError> {
         let mut context = Self(unsafe { std::mem::zeroed() });
         let mut ipl_settings: ffi::IPLContextSettings = settings.into();
 
@@ -43,12 +44,8 @@ impl Context {
         }
     }
 
-    unsafe fn inner(&self) -> &ffi::IPLContext {
-        &self.0
-    }
-
-    unsafe fn inner_mut(&mut self) -> &mut ffi::IPLContext {
-        &mut self.0
+    pub unsafe fn inner(&self) -> ffi::IPLContext {
+        self.0
     }
 }
 

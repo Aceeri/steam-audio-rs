@@ -1,4 +1,3 @@
-
 use steam_audio_sys::ffi;
 
 pub enum SteamAudioError {

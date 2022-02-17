@@ -1,22 +1,21 @@
-
-use std::{path::PathBuf, ffi::CString};
+use std::{ffi::CString};
 
 use crate::context::Context;
 
 use steam_audio_sys::ffi;
 
-use crate::{refcount::RefCounted, error::SteamAudioError};
+use crate::{error::SteamAudioError};
 
 pub enum HRTFSettings {
     Default,
-    SOFA(PathBuf),
+    SOFA(String),
 }
 
-impl Into<ffi::IPLHRTFSettings> for HRTFSettings {
+impl Into<ffi::IPLHRTFSettings> for &HRTFSettings {
     fn into(self) -> ffi::IPLHRTFSettings {
         let (type_, path) = match self {
-            HRTFSettings::Default => (ffi::IPLHRTFType::IPL_HRTFTYPE_DEFAULT, PathBuf::new()),
-            HRTFSettings::SOFA(path) => (ffi::IPLHRTFType::IPL_HRTFTYPE_SOFA, path),
+            HRTFSettings::Default => (ffi::IPLHRTFType::IPL_HRTFTYPE_DEFAULT, String::new()),
+            HRTFSettings::SOFA(path) => (ffi::IPLHRTFType::IPL_HRTFTYPE_SOFA, path.clone()),
         };
 
         let cstring = CString::new(path).expect("interior nul byte in path");
@@ -29,23 +28,46 @@ impl Into<ffi::IPLHRTFSettings> for HRTFSettings {
 }
 
 pub struct AudioSettings {
+    sampling_rate: u32,
+    frame_size: u32,
+}
 
+impl Into<ffi::IPLAudioSettings> for &AudioSettings {
+    fn into(self) -> ffi::IPLAudioSettings {
+        ffi::IPLAudioSettings {
+            samplingRate: self.sampling_rate as i32,
+            frameSize: self.frame_size as i32,
+        }
+    }
 }
 
 pub struct HRTF(ffi::IPLHRTF);
 
 impl HRTF {
-    fn new(context: Context, audio_settings: AudioSettings, hrtf_settings: HRTFSettings) -> Result<Self, SteamAudioError> {
+    pub fn new(
+        context: &Context,
+        audio_settings: &AudioSettings,
+        hrtf_settings: &HRTFSettings,
+    ) -> Result<Self, SteamAudioError> {
         let mut hrtf = Self(unsafe { std::mem::zeroed() });
         let mut audio_ipl_settings: ffi::IPLAudioSettings = audio_settings.into();
         let mut hrtf_ipl_settings: ffi::IPLHRTFSettings = hrtf_settings.into();
 
         unsafe {
-            match ffi::iplHRTFCreate(context.0, &mut audio_ipl_settings, &mut hrtf_ipl_settings, &mut hrtf.0) {
+            match ffi::iplHRTFCreate(
+                context.inner(),
+                &mut audio_ipl_settings,
+                &mut hrtf_ipl_settings,
+                &mut hrtf.0,
+            ) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(hrtf),
                 err => Err(SteamAudioError::IPLError(err)),
             }
         }
+    }
+
+    pub unsafe fn inner(&self) -> ffi::IPLHRTF {
+        self.0
     }
 }
 

@@ -10,7 +10,6 @@ keywords = ["steam", "audio", "vr", "binaural", "gamedev"]
 categories = ["multimedia::audio", "games", "simulation"]
 license-file = "LICENSE.md"
 exclude = ["scene/*", "src/main.rs"]
-resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

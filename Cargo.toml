@@ -1,2 +1,3 @@
 [workspace]
 members = ["steam-audio", "steam-audio-sys"]
+resolver = "2"
