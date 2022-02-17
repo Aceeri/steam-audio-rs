@@ -49,7 +49,7 @@ impl InputAudioInformation {
 }
 
 fn get_audio() -> Result<Vec<f32>, Box<dyn Error>> {
-    let file = File::open("examples/audio/eduardo.ogg")?;
+    let file = File::open("assets/eduardo.ogg")?;
     let mut stream_reader = OggStreamReader::new(file)?;
     assert_eq!(stream_reader.ident_hdr.audio_channels, 1);
 
@@ -73,9 +73,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let hrtf_settings = HRTFSettings::default();
     let hrtf = HRTF::new(&context,  &audio_settings, &hrtf_settings)?;
 
-    let mut audio_buffer = get_audio().unwrap();
+    let mut audio_buffer = get_audio()?;
     let mut input = InputAudioInformation::from_pcm_data((&audio_settings).into(), audio_buffer).unwrap();
 
+    /*
     {
         let mut effect_settings = IPLBinauralEffectSettings { hrtf: hrtf };
 
@@ -218,17 +219,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     eprintln!("scene={:?}", scene);
     eprintln!("env={:?}", env);
     */
-
-    unsafe {
-        /*
-        iplDestroyEnvironment(&mut env);
-        iplDestroyScene(&mut scene);
-        iplDestroyComputeDevice(&mut device);
-        iplDestroyContext(&mut context);
-        iplCleanup();
-        */
-
-        iplHRTFRelease(&mut hrtf);
-        iplContextRelease(&mut context);
-    }
+    */
+    Ok(())
 }

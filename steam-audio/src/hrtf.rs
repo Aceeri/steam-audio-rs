@@ -1,6 +1,6 @@
 use std::ffi::CString;
 
-use crate::{context::Context, error::map_iplerror};
+use crate::{context::Context};
 
 use steam_audio_sys::ffi;
 
@@ -53,6 +53,16 @@ impl Into<ffi::IPLAudioSettings> for &AudioSettings {
             samplingRate: self.sampling_rate as i32,
             frameSize: self.frame_size as i32,
         }
+    }
+}
+
+impl AudioSettings {
+    pub fn sampling_rate(&self) -> u32 {
+        self.sampling_rate
+    }
+
+    pub fn frame_size(&self) -> u32 {
+        self.frame_size
     }
 }
 

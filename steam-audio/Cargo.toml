@@ -18,3 +18,7 @@ steam-audio-sys = { path = "../steam-audio-sys" }
 
 [dev-dependencies]
 lewton = "*"
+
+[[example]]
+name = "wrapper"
+path = "examples/wrapper.rs"
