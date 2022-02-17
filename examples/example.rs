@@ -6,7 +6,7 @@ extern crate glfw;
 extern crate lewton;
 extern crate steam_audio;
 
-use lewton::inside_ogg::{OggStreamReader, read_headers};
+use lewton::inside_ogg::{read_headers, OggStreamReader};
 use steam_audio::ffi::*;
 
 use std::error::Error;
@@ -87,18 +87,40 @@ impl Iterator for IPLAudioBufferIterator {
     }
 }
 
-fn from_pcm_data(settings: IPLAudioSettings, mut data: Vec<f32>) -> Result<(usize, IPLAudioBuffer), Box<dyn Error>> {
-    let frames = data.len() / settings.frameSize as usize;
-    let mut outer = vec![data.as_mut_ptr()];
+#[derive(Debug)]
+struct InputAudioInformation {
+    data: Vec<f32>,
+    outer: Vec<*mut f32>,
+    frames: usize,
+    frame_size: usize,
+    buffer: IPLAudioBuffer,
+}
 
-    let buffer = IPLAudioBuffer {
-        numChannels: 1,
-        numSamples: settings.frameSize,
-        data: outer.as_mut_ptr(),
-    };
+impl InputAudioInformation {
+    fn from_pcm_data(
+        settings: IPLAudioSettings,
+        mut data: Vec<f32>,
+    ) -> Result<Self, Box<dyn Error>> {
+        let frames = data.len() / settings.frameSize as usize;
 
-    std::mem::forget(buffer.data);
-    Ok((frames, buffer))
+        let buffer = IPLAudioBuffer {
+            numChannels: 1,
+            numSamples: settings.frameSize,
+            data: ptr::null_mut(),
+        };
+
+        let mut input = Self {
+            data,
+            frames,
+            frame_size: settings.frameSize as usize,
+            buffer,
+            outer: Vec::new(),
+        };
+        input.outer.push(input.data.as_mut_ptr());
+        input.buffer.data = input.outer.as_mut_ptr();
+
+        Ok(input)
+    }
 }
 
 fn get_audio() -> Result<Vec<f32>, Box<dyn Error>> {
@@ -112,6 +134,10 @@ fn get_audio() -> Result<Vec<f32>, Box<dyn Error>> {
     }
 
     Ok(concatted)
+}
+
+fn vf_to_u8(v: &[f32]) -> &[u8] {
+    unsafe { std::slice::from_raw_parts(v.as_ptr() as *const u8, v.len() * 4) }
 }
 
 fn main() {
@@ -141,7 +167,7 @@ fn main() {
     };
 
     let file = CString::new("").unwrap();
-    let hrtf = unsafe {
+    let mut hrtf = unsafe {
         let mut hrtf = ptr::null_mut();
         let mut hrtf_settings = IPLHRTFSettings {
             type_: IPLHRTFType::IPL_HRTFTYPE_DEFAULT,
@@ -163,7 +189,7 @@ fn main() {
     dbg!(hrtf);
 
     let mut audio_buffer = get_audio().unwrap();
-    let (frames, mut input_buffer) = from_pcm_data(audio_settings, audio_buffer).unwrap();
+    let mut input = InputAudioInformation::from_pcm_data(audio_settings, audio_buffer).unwrap();
 
     {
         let mut effect_settings = IPLBinauralEffectSettings { hrtf: hrtf };
@@ -195,50 +221,74 @@ fn main() {
             );
         }
 
-        let mut effect_params = IPLBinauralEffectParams {
-            direction: IPLVector3 {
-                x: 1.0,
-                y: 1.0,
-                z: 1.0,
-            },
-            hrtf: hrtf,
-            interpolation: IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_BILINEAR,
-            spatialBlend: 1.0,
-        };
-
         let mut output_audio = Vec::new();
 
-        dbg!(effect_params);
         dbg!(binaural);
-        dbg!(input_buffer);
-        dbg!(output_buffer);
+        dbg!(input.frames);
+        dbg!(input.data.len());
 
-        for frame in 0..frames - 1 {
+        for frame in 0..input.frames - 1 {
+            let time = (frame as f32 / input.frames as f32) * std::f32::consts::TAU;
+
+            let direction = IPLVector3 {
+                x: time.cos() / 2.0,
+                y: time.sin() * 4.0,
+                z: (1.0 - time.cos()) / 2.0,
+            };
+
+            let mut effect_params = IPLBinauralEffectParams {
+                direction: direction,
+                hrtf: hrtf,
+                interpolation: IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_BILINEAR,
+                spatialBlend: 1.0,
+            };
+
             println!("{:?}", frame);
-            dbg!();
+            dbg!(&input.buffer);
+            dbg!(&output_buffer);
 
-            let mut output_audio_frame: Vec<f32> = vec![0.0; (2 * audio_settings.frameSize) as usize];
-            dbg!();
+            let mut output_audio_frame: Vec<f32> =
+                vec![0.0; (2 * audio_settings.frameSize) as usize];
+
             unsafe {
-            dbg!();
-                iplBinauralEffectApply(binaural, &mut effect_params, &mut input_buffer, &mut output_buffer);
-            dbg!();
-                iplAudioBufferInterleave(context, &mut output_buffer, output_audio_frame.as_mut_ptr());
-            dbg!();
+                dbg!();
+                let effect = iplBinauralEffectApply(
+                    binaural,
+                    &mut effect_params,
+                    &mut input.buffer,
+                    &mut output_buffer,
+                );
+                dbg!(effect);
+                dbg!();
+                iplAudioBufferInterleave(
+                    context,
+                    &mut output_buffer,
+                    output_audio_frame.as_mut_ptr(),
+                );
+                dbg!();
             }
 
-            dbg!();
+            //println!("{:?}", output_audio);
+
             output_audio.extend(output_audio_frame.clone());
-            dbg!();
 
             unsafe {
-                input_buffer.data = input_buffer.data.offset(audio_settings.frameSize as isize);
+                (*input.buffer.data) =
+                    (*input.buffer.data).offset(audio_settings.frameSize as isize);
             }
-            dbg!();
+        }
+
+        use std::io::Write;
+        let mut file = File::create("eduardo_binaural.raw").unwrap();
+        file.write(vf_to_u8(&output_audio)).unwrap();
+
+        unsafe {
+            iplAudioBufferFree(context, &mut output_buffer);
+            iplBinauralEffectRelease(&mut binaural);
         }
     }
 
-    let effect_settings = IPLAmbisonicsEncodeEffectSettings { maxOrder: 2 };
+    //let effect_settings = IPLAmbisonicsEncodeEffectSettings { maxOrder: 2 };
 
     /*
     let mut device = unsafe {
@@ -293,6 +343,7 @@ fn main() {
         iplCleanup();
         */
 
+        iplHRTFRelease(&mut hrtf);
         iplContextRelease(&mut context);
     }
 }
