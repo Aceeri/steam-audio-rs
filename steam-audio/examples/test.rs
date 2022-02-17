@@ -1,8 +1,4 @@
-#![allow(non_snake_case)]
-#![allow(non_camel_case_types)]
-#![allow(non_upper_case_globals)]
-extern crate gl;
-extern crate glfw;
+
 extern crate lewton;
 extern crate steam_audio_sys;
 
@@ -15,33 +11,6 @@ use std::fs::File;
 use std::os::raw::c_char;
 use std::ptr::addr_of_mut;
 use std::{ptr, slice};
-
-unsafe extern "C" fn log_callback(level: IPLLogLevel, message: *const ::std::os::raw::c_char) {
-    let c_str: &CStr = CStr::from_ptr(message);
-    let str = c_str.to_str().unwrap();
-    eprintln!("{:?}: {}", level, str);
-}
-
-struct IPLAudioBufferIterator {
-    buffer: IPLAudioBuffer,
-    frames: usize,
-}
-
-impl Iterator for IPLAudioBufferIterator {
-    type Item = ();
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.frames > 0 {
-            unsafe {
-                self.buffer.data = self.buffer.data.offset(self.buffer.numSamples as isize);
-            }
-
-            self.frames -= 1;
-            Some(())
-        } else {
-            None
-        }
-    }
-}
 
 #[derive(Debug)]
 struct InputAudioInformation {
@@ -96,54 +65,16 @@ fn vf_to_u8(v: &[f32]) -> &[u8] {
     unsafe { std::slice::from_raw_parts(v.as_ptr() as *const u8, v.len() * 4) }
 }
 
-fn main() {
-    let mut context = unsafe {
-        let mut context = ptr::null_mut();
-        let mut settings = IPLContextSettings {
-            version: STEAMAUDIO_VERSION,
-            logCallback: Some(log_callback),
-            allocateCallback: None,
-            simdLevel: IPLSIMDLevel::IPL_SIMDLEVEL_AVX512,
-            freeCallback: None,
-        };
-        assert_eq!(
-            IPLerror::IPL_STATUS_SUCCESS,
-            iplContextCreate(&mut settings, &mut context)
-        );
-        context
-    };
+use steam_audio::prelude::*;
 
-    println!("{:?}", context);
-
-    let mut audio_settings = IPLAudioSettings {
-        samplingRate: 44100,
-        frameSize: 1024,
-    };
-
-    let file = CString::new("").unwrap();
-    let mut hrtf = unsafe {
-        let mut hrtf = ptr::null_mut();
-        let mut hrtf_settings = IPLHRTFSettings {
-            type_: IPLHRTFType::IPL_HRTFTYPE_DEFAULT,
-            sofaFileName: file.as_ptr() as *const c_char,
-        };
-
-        println!("{:?}", hrtf);
-        println!("{:?}", hrtf_settings);
-        println!("{:?}", audio_settings);
-        dbg!(context);
-        dbg!(*context);
-        assert_eq!(
-            IPLerror::IPL_STATUS_SUCCESS,
-            iplHRTFCreate(context, &mut audio_settings, &mut hrtf_settings, &mut hrtf,)
-        );
-        hrtf
-    };
-
-    dbg!(hrtf);
+fn main() -> Result<(), Box<dyn Error>> {
+    let context = Context::new(ContextSettings::default())?;
+    let audio_settings = AudioSettings::default();
+    let hrtf_settings = HRTFSettings::default();
+    let hrtf = HRTF::new(&context,  &audio_settings, &hrtf_settings)?;
 
     let mut audio_buffer = get_audio().unwrap();
-    let mut input = InputAudioInformation::from_pcm_data(audio_settings, audio_buffer).unwrap();
+    let mut input = InputAudioInformation::from_pcm_data((&audio_settings).into(), audio_buffer).unwrap();
 
     {
         let mut effect_settings = IPLBinauralEffectSettings { hrtf: hrtf };
@@ -153,7 +84,7 @@ fn main() {
             assert_eq!(
                 IPLerror::IPL_STATUS_SUCCESS,
                 iplBinauralEffectCreate(
-                    context,
+                    context.inner(),
                     &mut audio_settings,
                     &mut effect_settings,
                     &mut effect

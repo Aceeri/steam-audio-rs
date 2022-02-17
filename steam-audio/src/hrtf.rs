@@ -1,14 +1,20 @@
-use std::{ffi::CString};
+use std::ffi::CString;
 
-use crate::context::Context;
+use crate::{context::Context, error::map_iplerror};
 
 use steam_audio_sys::ffi;
 
-use crate::{error::SteamAudioError};
+use crate::error::SteamAudioError;
 
 pub enum HRTFSettings {
     Default,
     SOFA(String),
+}
+
+impl Default for HRTFSettings {
+    fn default() -> Self {
+        Self::Default
+    }
 }
 
 impl Into<ffi::IPLHRTFSettings> for &HRTFSettings {
@@ -30,6 +36,15 @@ impl Into<ffi::IPLHRTFSettings> for &HRTFSettings {
 pub struct AudioSettings {
     sampling_rate: u32,
     frame_size: u32,
+}
+
+impl Default for AudioSettings {
+    fn default() -> Self {
+        Self {
+            sampling_rate: 44100,
+            frame_size: 1024,
+        }
+    }
 }
 
 impl Into<ffi::IPLAudioSettings> for &AudioSettings {
