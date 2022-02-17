@@ -28,5 +28,7 @@ pub mod ffi {
     #![allow(non_camel_case_types)]
     #![allow(non_upper_case_globals)]
 
+    pub const STEAMAUDIO_VERSION: u32 = STEAMAUDIO_VERSION_MAJOR << 16 | STEAMAUDIO_VERSION_MINOR << 8 | STEAMAUDIO_VERSION_PATCH;
+
     include!(concat!(env!("OUT_DIR"), "/bindgen.rs"));
 }

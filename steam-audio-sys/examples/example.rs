@@ -4,10 +4,10 @@
 extern crate gl;
 extern crate glfw;
 extern crate lewton;
-extern crate steam_audio;
+extern crate steam_audio_sys;
 
 use lewton::inside_ogg::{read_headers, OggStreamReader};
-use steam_audio::ffi::*;
+use steam_audio_sys::ffi::*;
 
 use std::error::Error;
 use std::ffi::{CStr, CString};
@@ -144,9 +144,7 @@ fn main() {
     let mut context = unsafe {
         let mut context = ptr::null_mut();
         let mut settings = IPLContextSettings {
-            version: STEAMAUDIO_VERSION_MAJOR << 16
-                | STEAMAUDIO_VERSION_MINOR << 8
-                | STEAMAUDIO_VERSION_PATCH,
+            version: STEAMAUDIO_VERSION,
             logCallback: Some(log_callback),
             allocateCallback: None,
             simdLevel: IPLSIMDLevel::IPL_SIMDLEVEL_AVX512,

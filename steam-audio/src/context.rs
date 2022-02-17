@@ -30,9 +30,8 @@ impl Into<ffi::IPLContextSettings> for ContextSettings {
 }
 pub struct Context(ffi::IPLContext);
 
-impl RefCounted for Context {
-    type Settings = ContextSettings;
-    fn create(settings: Self::Settings) -> Result<Self, SteamAudioError> {
+impl Context {
+    fn new(settings: ContextSettings) -> Result<Self, SteamAudioError> {
         let mut context = Self(unsafe { std::mem::zeroed() });
         let mut ipl_settings: ffi::IPLContextSettings = settings.into();
 
@@ -44,7 +43,17 @@ impl RefCounted for Context {
         }
     }
 
-    fn release(mut self) {
+    unsafe fn inner(&self) -> &ffi::IPLContext {
+        &self.0
+    }
+
+    unsafe fn inner_mut(&mut self) -> &mut ffi::IPLContext {
+        &mut self.0
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
         unsafe {
             ffi::iplContextRelease(&mut self.0);
         }

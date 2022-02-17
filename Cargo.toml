@@ -1,25 +1,2 @@
-[package]
-name = "steam-audio"
-version = "0.2.3"
-authors = ["germän gômez <germangb42@gmail.com>"]
-description = "Rust bindings for Valve Software's binaural audio rendering library."
-repository = "https://github.com/germangb/steam-audio-rs.git"
-readme = "README.md"
-keywords = ["steam", "audio", "vr", "binaural", "gamedev"]
-categories = ["multimedia::audio", "games", "simulation"]
-license-file = "LICENSE.md"
-exclude = ["scene/*", "src/main.rs"]
-build = "build.rs"
-resolver = "2"
-
-[dependencies]
-#glfw = "0.20.0"
-#gl = "0.10.0"
-
-[build-dependencies]
-bindgen = "0.59.2"
-
-[dev-dependencies]
-glfw = "0.43.0"
-gl = "0.14.0"
-lewton = "*"
+[workspace]
+members = ["steam-audio", "steam-audio-sys"]
