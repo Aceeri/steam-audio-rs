@@ -31,8 +31,12 @@ impl AudioBuffer {
         }
     }
 
+    pub fn total_samples(&self) -> usize {
+        self.data.get(0).unwrap_or(&Vec::new()).len()
+    }
+
     pub fn frames(&self) -> usize {
-        self.data.get(0).unwrap_or(&Vec::new()).len() / self.frame_size
+        self.total_samples() / self.frame_size
     }
 
     pub fn channels(&self) -> usize {
@@ -49,6 +53,10 @@ impl AudioBuffer {
             numSamples: self.frame_size as i32,
             data: std::ptr::null_mut(),
         }
+    }
+
+    pub fn time_seconds(&self, audio_settings: &AudioSettings) -> f64 {
+        self.total_samples() as f64 / audio_settings.sampling_rate() as f64
     }
 }
 

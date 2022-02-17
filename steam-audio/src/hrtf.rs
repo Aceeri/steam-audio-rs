@@ -15,7 +15,7 @@ pub enum HRTFInterpolation {
 impl Into<ffi::IPLHRTFInterpolation> for HRTFInterpolation {
     fn into(self) -> ffi::IPLHRTFInterpolation {
         match self {
-            Self::NearestNeighbor => ffi::IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_BILINEAR,
+            Self::NearestNeighbor => ffi::IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_NEAREST,
             Self::Bilinear => ffi::IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_BILINEAR,
         }
     }

@@ -31,8 +31,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let hrtf_settings = HRTFSettings::default();
     let hrtf = HRTF::new(&context, &audio_settings, &hrtf_settings)?;
 
+
     let audio = get_audio()?;
     let audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
+    dbg!(audio_settings.frame_size());
+    dbg!(audio_buffer.frames());
+    dbg!(audio_settings.frame_size() as usize * audio_buffer.frames());
+    dbg!(audio_buffer.time_seconds(&audio_settings));
     let frame_length = audio_buffer.frames();
 
     let mut output: Vec<Vec<f32>> = vec![vec![]; 2];
@@ -44,7 +49,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         let mut params = BinauralParams::default();
         params.interpolation = HRTFInterpolation::Bilinear;
-        params.direction = Vec3::new(time.cos(), time.sin(), 1.0 - time.cos());
+        params.direction = Vec3::new(time.cos(), time.sin(), 0.0);
 
         binaural_effect.apply_step_with_buffer(&params, frame, &mut output_buffer)?;
 
