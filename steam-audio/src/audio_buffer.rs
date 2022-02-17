@@ -15,6 +15,14 @@ impl AudioBuffer {
         }
     }
 
+    pub fn frame_buffer_with_channels(settings: &AudioSettings, channels: usize) -> Self {
+        let frame_size = settings.frame_size() as usize;
+        AudioBuffer {
+            data: vec![vec![0.0; frame_size]; channels],
+            frame_size: frame_size,
+        }
+    }
+
     pub fn from_raw_pcm(settings: &AudioSettings, mut data: Vec<Vec<f32>>) -> Self {
         AudioBuffer {
             data: data,
@@ -44,7 +52,7 @@ impl AudioBuffer {
 }
 
 impl<'a> IntoIterator for &'a AudioBuffer {
-    type Item = usize;
+    type Item = AudioBufferFrame<'a>;
     type IntoIter = AudioBufferIterator<'a>;
     fn into_iter(self) -> Self::IntoIter {
         Self::IntoIter::new(self)
@@ -75,9 +83,14 @@ impl<'a> AudioBufferIterator<'a> {
     }
 }
 
+use std::marker::PhantomData;
+pub struct AudioBufferFrame<'a>(pub(crate) ffi::IPLAudioBuffer, PhantomData<&'a ()>);
+
 impl<'a> Iterator for AudioBufferIterator<'a> {
-    type Item = usize;
+    type Item = AudioBufferFrame<'a>;
     fn next(&mut self) -> Option<Self::Item> {
+        let frame = AudioBufferFrame(self.inner, PhantomData);
+
         if let Some(index) = self.current {
             if index < self.frames {
                 // Move the pointers ahead 1 frame size.
@@ -88,13 +101,13 @@ impl<'a> Iterator for AudioBufferIterator<'a> {
                 }
 
                 self.current = Some(index + 1);
-                self.current
+                Some(frame)
             } else {
                 None
             }
         } else {
             self.current = Some(0);
-            self.current
+            Some(frame)
         }
     }
 }

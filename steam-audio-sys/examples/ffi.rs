@@ -75,7 +75,7 @@ impl InputAudioInformation {
 }
 
 fn get_audio() -> Result<Vec<f32>, Box<dyn Error>> {
-    let file = File::open("examples/audio/eduardo.ogg")?;
+    let file = File::open("assets/eduardo.ogg")?;
     let mut stream_reader = OggStreamReader::new(file)?;
     assert_eq!(stream_reader.ident_hdr.audio_channels, 1);
 

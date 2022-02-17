@@ -72,9 +72,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let hrtf_settings = HRTFSettings::default();
     let hrtf = HRTF::new(&context, &audio_settings, &hrtf_settings)?;
 
-    let mut audio_buffer = get_audio()?;
-    let mut input =
-        InputAudioInformation::from_pcm_data((&audio_settings).into(), audio_buffer).unwrap();
+    let mut audio = get_audio()?;
+    let mut audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
 
     /*
     {

@@ -33,3 +33,13 @@ pub mod ffi {
 
     include!(concat!(env!("OUT_DIR"), "/bindgen.rs"));
 }
+
+impl From<glam::Vec3> for ffi::IPLVector3 {
+    fn from(vec: glam::Vec3) -> Self {
+        ffi::IPLVector3 {
+            x: vec.x,
+            y: vec.y,
+            z: vec.z,
+        }
+    }
+}
