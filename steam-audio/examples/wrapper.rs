@@ -96,7 +96,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    // Interleave
+    // Interleave channels
+    //
+    // 111111112222222233333333
+    // -->
+    // 123123123123123123123123
     let mut output_interleaved = Vec::new();
     for index in 0..output[0].len() {
         for channel in output.iter() {
