@@ -1,0 +1,18 @@
+[package]
+name = "steam-audio"
+version = "0.1.0"
+edition = "2021"
+authors = ["germän gômez <germangb42@gmail.com>", "Connor McCluskey <conmcclusk@gmail.com>"]
+description = "Rust bindings for Valve Software's binaural audio rendering library."
+repository = "https://github.com/aceeri/steam-audio-rs.git"
+readme = "README.md"
+keywords = ["steam", "audio", "vr", "binaural", "gamedev"]
+categories = ["multimedia::audio", "games", "simulation"]
+license-file = "LICENSE.md"
+exclude = ["scene/*", "src/main.rs"]
+resolver = "2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+steam-audio-sys = { path = "../steam-audio-sys" }
