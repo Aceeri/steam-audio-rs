@@ -135,8 +135,6 @@ fn main() {
         hrtf
     };
 
-    dbg!(hrtf);
-
     let mut audio_buffer = get_audio().unwrap();
     let mut input = InputAudioInformation::from_pcm_data(audio_settings, audio_buffer).unwrap();
 
@@ -192,32 +190,22 @@ fn main() {
                 spatialBlend: 1.0,
             };
 
-            println!("{:?}", frame);
-            dbg!(&input.buffer);
-            dbg!(&output_buffer);
-
             let mut output_audio_frame: Vec<f32> =
                 vec![0.0; (2 * audio_settings.frameSize) as usize];
 
             unsafe {
-                dbg!();
                 let effect = iplBinauralEffectApply(
                     binaural,
                     &mut effect_params,
                     &mut input.buffer,
                     &mut output_buffer,
                 );
-                dbg!(effect);
-                dbg!();
                 iplAudioBufferInterleave(
                     context,
                     &mut output_buffer,
                     output_audio_frame.as_mut_ptr(),
                 );
-                dbg!();
             }
-
-            //println!("{:?}", output_audio);
 
             output_audio.extend(output_audio_frame.clone());
 
@@ -237,61 +225,7 @@ fn main() {
         }
     }
 
-    //let effect_settings = IPLAmbisonicsEncodeEffectSettings { maxOrder: 2 };
-
-    /*
-    let mut device = unsafe {
-        let mut device = ptr::null_mut();
-        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateComputeDevice(context, DEVICE_FILTER, &mut device));
-        device
-    };
-
-    let mut scene = unsafe {
-        let mut scene: IPLhandle = ptr::null_mut();
-        let mut mesh: IPLhandle = ptr::null_mut();
-
-        const NUM_TRIS: IPLint32 = 28;
-        const NUM_VERTS: IPLint32 = 48;
-
-        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateScene(context, device, SIM_SETTINGS, 1, &mut scene));
-        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateStaticMesh(scene, NUM_VERTS, NUM_TRIS, &mut mesh));
-
-        let tris: &mut [IPLTriangle] = slice::from_raw_parts_mut(BIN_DATA.as_ptr() as _, 336);
-        let vert: &mut [IPLVector3] = slice::from_raw_parts_mut(BIN_DATA.as_ptr().offset(336) as _, 576);
-
-        iplSetStaticMeshVertices(scene, mesh, vert.as_mut_ptr());
-        iplSetStaticMeshTriangles(scene, mesh, tris.as_mut_ptr());
-
-        iplFinalizeScene(scene, None);
-        scene
-    };
-
     unsafe {
-        let file = CString::new("scene/scene.obj").unwrap();
-        iplDumpSceneToObjFile(scene, file.into_raw());
-    }
-
-    let mut env = unsafe {
-        let mut env = ptr::null_mut();
-        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateEnvironment(context, device, SIM_SETTINGS, scene, ptr::null_mut(), &mut env));
-        env
-    };
-
-    eprintln!("context={:?}", context);
-    eprintln!("device={:?}", device);
-    eprintln!("scene={:?}", scene);
-    eprintln!("env={:?}", env);
-    */
-
-    unsafe {
-        /*
-        iplDestroyEnvironment(&mut env);
-        iplDestroyScene(&mut scene);
-        iplDestroyComputeDevice(&mut device);
-        iplDestroyContext(&mut context);
-        iplCleanup();
-        */
-
         iplHRTFRelease(&mut hrtf);
         iplContextRelease(&mut context);
     }

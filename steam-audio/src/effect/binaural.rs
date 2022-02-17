@@ -1,32 +1,3 @@
-/*
-let mut effect_params = IPLBinauralEffectParams {
-    direction: direction,
-    hrtf: hrtf,
-    interpolation: IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_BILINEAR,
-    spatialBlend: 1.0,
-};
-
-println!("{:?}", frame);
-dbg!(&input.buffer);
-dbg!(&output_buffer);
-
-let mut output_audio_frame: Vec<f32> =
-    vec![0.0; (2 * audio_settings.frameSize) as usize];
-
-unsafe {
-    let effect = iplBinauralEffectApply(
-        binaural,
-        &mut effect_params,
-        &mut input.buffer,
-        &mut output_buffer,
-    );
-    iplAudioBufferInterleave(
-        context,
-        &mut output_buffer,
-        output_audio_frame.as_mut_ptr(),
-    );
-}
-*/
 
 use steam_audio_sys::ffi;
 
@@ -118,21 +89,17 @@ impl BinauralEffect {
         let mut output_ffi_buffer = unsafe { output_buffer.ffi_buffer_null() };
         let mut data_ptrs = unsafe { output_buffer.data_ptrs() };
         output_ffi_buffer.data = data_ptrs.as_mut_ptr();
-        dbg!(output_ffi_buffer);
 
         let mut ipl_params = params.merge(self.hrtf);
 
-        dbg!();
 
         unsafe {
-        dbg!();
             let effect = ffi::iplBinauralEffectApply(
                 self.inner,
                 &mut ipl_params,
                 &mut frame.0,
                 &mut output_ffi_buffer,
             );
-        dbg!();
         }
 
         Ok(())
@@ -141,7 +108,6 @@ impl BinauralEffect {
     pub fn apply_step(&self, audio_settings: &AudioSettings, params: &BinauralParams, mut frame: AudioBufferFrame) -> Result<AudioBuffer, SteamAudioError> {
         let mut output_buffer = AudioBuffer::frame_buffer_with_channels(audio_settings, 2);
         self.apply_step_with_buffer(audio_settings, params, frame, &mut output_buffer)?;
-        dbg!();
         Ok(output_buffer)
     }
 }

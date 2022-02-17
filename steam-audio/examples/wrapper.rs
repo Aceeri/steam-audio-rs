@@ -77,9 +77,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let audio = get_audio()?;
     let audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
     let frame_length = audio_buffer.frames();
-    let channels = audio_buffer.channels();
 
     let mut output: Vec<Vec<f32>> = vec![vec![]; 2];
+    let mut output_buffer = AudioBuffer::frame_buffer_with_channels(&audio_settings, 2);
 
     let binaural_effect = BinauralEffect::new(&context, &audio_settings, &hrtf)?;
     for (frame_index, frame) in audio_buffer.into_iter().enumerate(){
@@ -89,15 +89,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         params.interpolation = HRTFInterpolation::Bilinear;
         params.direction = Vec3::new(time.cos(), time.sin(), 1.0 - time.cos());
 
-        dbg!();
-        let output_buffer = binaural_effect.apply_step(&audio_settings, &params, frame)?;
-        dbg!();
+        binaural_effect.apply_step_with_buffer(&audio_settings, &params, frame, &mut output_buffer)?;
 
         for (channel, output) in output_buffer.data.iter().zip(output.iter_mut()) {
             output.extend(channel);
         }
     }
-
 
     // Interleave
     let mut output_interleaved = Vec::new();
