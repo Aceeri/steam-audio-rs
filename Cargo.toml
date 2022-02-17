@@ -22,3 +22,4 @@ bindgen = "0.59.2"
 [dev-dependencies]
 glfw = "0.43.0"
 gl = "0.14.0"
+lewton = "*"

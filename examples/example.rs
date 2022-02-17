@@ -3,11 +3,15 @@
 #![allow(non_upper_case_globals)]
 extern crate gl;
 extern crate glfw;
+extern crate lewton;
 extern crate steam_audio;
 
+use lewton::inside_ogg::{OggStreamReader, read_headers};
 use steam_audio::ffi::*;
 
-use std::ffi::{CString, CStr};
+use std::error::Error;
+use std::ffi::{CStr, CString};
+use std::fs::File;
 use std::os::raw::c_char;
 use std::ptr::addr_of_mut;
 use std::{ptr, slice};
@@ -62,6 +66,54 @@ unsafe extern "C" fn log_callback(level: IPLLogLevel, message: *const ::std::os:
     eprintln!("{:?}: {}", level, str);
 }
 
+struct IPLAudioBufferIterator {
+    buffer: IPLAudioBuffer,
+    frames: usize,
+}
+
+impl Iterator for IPLAudioBufferIterator {
+    type Item = ();
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.frames > 0 {
+            unsafe {
+                self.buffer.data = self.buffer.data.offset(self.buffer.numSamples as isize);
+            }
+
+            self.frames -= 1;
+            Some(())
+        } else {
+            None
+        }
+    }
+}
+
+fn from_pcm_data(settings: IPLAudioSettings, mut data: Vec<f32>) -> Result<(usize, IPLAudioBuffer), Box<dyn Error>> {
+    let frames = data.len() / settings.frameSize as usize;
+    let mut outer = vec![data.as_mut_ptr()];
+
+    let buffer = IPLAudioBuffer {
+        numChannels: 1,
+        numSamples: settings.frameSize,
+        data: outer.as_mut_ptr(),
+    };
+
+    std::mem::forget(buffer.data);
+    Ok((frames, buffer))
+}
+
+fn get_audio() -> Result<Vec<f32>, Box<dyn Error>> {
+    let file = File::open("examples/audio/eduardo.ogg")?;
+    let mut stream_reader = OggStreamReader::new(file)?;
+    assert_eq!(stream_reader.ident_hdr.audio_channels, 1);
+
+    let mut concatted = Vec::new();
+    while let Some(packet) = stream_reader.read_dec_packet_generic::<Vec<Vec<f32>>>()? {
+        concatted.extend(packet[0].clone());
+    }
+
+    Ok(concatted)
+}
+
 fn main() {
     let mut context = unsafe {
         let mut context = ptr::null_mut();
@@ -103,18 +155,90 @@ fn main() {
         dbg!(*context);
         assert_eq!(
             IPLerror::IPL_STATUS_SUCCESS,
-            iplHRTFCreate(
-                context,
-                &mut audio_settings,
-                &mut hrtf_settings,
-                &mut hrtf,
-            )
+            iplHRTFCreate(context, &mut audio_settings, &mut hrtf_settings, &mut hrtf,)
         );
         hrtf
     };
 
     dbg!(hrtf);
 
+    let mut audio_buffer = get_audio().unwrap();
+    let (frames, mut input_buffer) = from_pcm_data(audio_settings, audio_buffer).unwrap();
+
+    {
+        let mut effect_settings = IPLBinauralEffectSettings { hrtf: hrtf };
+
+        let mut binaural = unsafe {
+            let mut effect = ptr::null_mut();
+            assert_eq!(
+                IPLerror::IPL_STATUS_SUCCESS,
+                iplBinauralEffectCreate(
+                    context,
+                    &mut audio_settings,
+                    &mut effect_settings,
+                    &mut effect
+                )
+            );
+            effect
+        };
+
+        let mut output_buffer = IPLAudioBuffer {
+            numChannels: 2,
+            numSamples: audio_settings.frameSize,
+            data: ptr::null_mut(),
+        };
+
+        unsafe {
+            assert_eq!(
+                IPLerror::IPL_STATUS_SUCCESS,
+                iplAudioBufferAllocate(context, 2, audio_settings.frameSize, &mut output_buffer)
+            );
+        }
+
+        let mut effect_params = IPLBinauralEffectParams {
+            direction: IPLVector3 {
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
+            },
+            hrtf: hrtf,
+            interpolation: IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_BILINEAR,
+            spatialBlend: 1.0,
+        };
+
+        let mut output_audio = Vec::new();
+
+        dbg!(effect_params);
+        dbg!(binaural);
+        dbg!(input_buffer);
+        dbg!(output_buffer);
+
+        for frame in 0..frames - 1 {
+            println!("{:?}", frame);
+            dbg!();
+
+            let mut output_audio_frame: Vec<f32> = vec![0.0; (2 * audio_settings.frameSize) as usize];
+            dbg!();
+            unsafe {
+            dbg!();
+                iplBinauralEffectApply(binaural, &mut effect_params, &mut input_buffer, &mut output_buffer);
+            dbg!();
+                iplAudioBufferInterleave(context, &mut output_buffer, output_audio_frame.as_mut_ptr());
+            dbg!();
+            }
+
+            dbg!();
+            output_audio.extend(output_audio_frame.clone());
+            dbg!();
+
+            unsafe {
+                input_buffer.data = input_buffer.data.offset(audio_settings.frameSize as isize);
+            }
+            dbg!();
+        }
+    }
+
+    let effect_settings = IPLAmbisonicsEncodeEffectSettings { maxOrder: 2 };
 
     /*
     let mut device = unsafe {
