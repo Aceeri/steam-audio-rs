@@ -2,8 +2,9 @@ use steam_audio_sys::ffi;
 
 use crate::prelude::AudioSettings;
 
+#[derive(Debug, Clone)]
 pub struct AudioBuffer {
-    data: Vec<Vec<f32>>,
+    pub data: Vec<Vec<f32>>,
     frame_size: usize,
 }
 
@@ -23,7 +24,7 @@ impl AudioBuffer {
         }
     }
 
-    pub fn from_raw_pcm(settings: &AudioSettings, mut data: Vec<Vec<f32>>) -> Self {
+    pub fn from_raw_pcm(settings: &AudioSettings, data: Vec<Vec<f32>>) -> Self {
         AudioBuffer {
             data: data,
             frame_size: settings.frame_size() as usize,
@@ -42,7 +43,7 @@ impl AudioBuffer {
         self.data.iter().map(|v| v.as_ptr() as *mut _).collect()
     }
 
-    pub unsafe fn ffi_buffer(&self) -> ffi::IPLAudioBuffer {
+    pub unsafe fn ffi_buffer_null(&self) -> ffi::IPLAudioBuffer {
         ffi::IPLAudioBuffer {
             numChannels: self.channels() as i32,
             numSamples: self.frame_size as i32,
@@ -69,7 +70,7 @@ pub struct AudioBufferIterator<'a> {
 
 impl<'a> AudioBufferIterator<'a> {
     pub fn new(buffer: &'a AudioBuffer) -> Self {
-        let mut ipl_buffer = unsafe { buffer.ffi_buffer() };
+        let mut ipl_buffer = unsafe { buffer.ffi_buffer_null() };
         let mut ptrs = unsafe { buffer.data_ptrs() };
         ipl_buffer.data = ptrs.as_mut_ptr();
 

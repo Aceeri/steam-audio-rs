@@ -1,7 +1,9 @@
 extern crate lewton;
 extern crate steam_audio_sys;
 
+use glam::Vec3;
 use lewton::inside_ogg::{read_headers, OggStreamReader};
+use steam_audio::effect::binaural::{BinauralEffect, HRTFInterpolation, BinauralParams};
 use steam_audio_sys::ffi::*;
 
 use std::error::Error;
@@ -72,152 +74,42 @@ fn main() -> Result<(), Box<dyn Error>> {
     let hrtf_settings = HRTFSettings::default();
     let hrtf = HRTF::new(&context, &audio_settings, &hrtf_settings)?;
 
-    let mut audio = get_audio()?;
-    let mut audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
+    let audio = get_audio()?;
+    let audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
+    let frame_length = audio_buffer.frames();
+    let channels = audio_buffer.channels();
 
-    /*
-    {
-        let mut effect_settings = IPLBinauralEffectSettings { hrtf: hrtf };
+    let mut output: Vec<Vec<f32>> = vec![vec![]; 2];
 
-        let mut binaural = unsafe {
-            let mut effect = ptr::null_mut();
-            assert_eq!(
-                IPLerror::IPL_STATUS_SUCCESS,
-                iplBinauralEffectCreate(
-                    context.inner(),
-                    &mut audio_settings,
-                    &mut effect_settings,
-                    &mut effect
-                )
-            );
-            effect
-        };
+    let binaural_effect = BinauralEffect::new(&context, &audio_settings, &hrtf)?;
+    for (frame_index, frame) in audio_buffer.into_iter().enumerate(){
+        let time = (frame_index as f32 / frame_length as f32) * std::f32::consts::TAU;
 
-        let mut output_buffer = IPLAudioBuffer {
-            numChannels: 2,
-            numSamples: audio_settings.frameSize,
-            data: ptr::null_mut(),
-        };
+        let mut params = BinauralParams::default();
+        params.interpolation = HRTFInterpolation::Bilinear;
+        params.direction = Vec3::new(time.cos(), time.sin(), 1.0 - time.cos());
 
-        unsafe {
-            assert_eq!(
-                IPLerror::IPL_STATUS_SUCCESS,
-                iplAudioBufferAllocate(context, 2, audio_settings.frameSize, &mut output_buffer)
-            );
-        }
+        dbg!();
+        let output_buffer = binaural_effect.apply_step(&audio_settings, &params, frame)?;
+        dbg!();
 
-        let mut output_audio = Vec::new();
-
-        dbg!(binaural);
-        dbg!(input.frames);
-        dbg!(input.data.len());
-
-        for frame in 0..input.frames - 1 {
-            let time = (frame as f32 / input.frames as f32) * std::f32::consts::TAU;
-
-            let direction = IPLVector3 {
-                x: time.cos() / 2.0,
-                y: time.sin() * 4.0,
-                z: (1.0 - time.cos()) / 2.0,
-            };
-
-            let mut effect_params = IPLBinauralEffectParams {
-                direction: direction,
-                hrtf: hrtf,
-                interpolation: IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_BILINEAR,
-                spatialBlend: 1.0,
-            };
-
-            println!("{:?}", frame);
-            dbg!(&input.buffer);
-            dbg!(&output_buffer);
-
-            let mut output_audio_frame: Vec<f32> =
-                vec![0.0; (2 * audio_settings.frameSize) as usize];
-
-            unsafe {
-                dbg!();
-                let effect = iplBinauralEffectApply(
-                    binaural,
-                    &mut effect_params,
-                    &mut input.buffer,
-                    &mut output_buffer,
-                );
-                dbg!(effect);
-                dbg!();
-                iplAudioBufferInterleave(
-                    context,
-                    &mut output_buffer,
-                    output_audio_frame.as_mut_ptr(),
-                );
-                dbg!();
-            }
-
-            //println!("{:?}", output_audio);
-
-            output_audio.extend(output_audio_frame.clone());
-
-            unsafe {
-                (*input.buffer.data) =
-                    (*input.buffer.data).offset(audio_settings.frameSize as isize);
-            }
-        }
-
-        use std::io::Write;
-        let mut file = File::create("eduardo_binaural.raw").unwrap();
-        file.write(vf_to_u8(&output_audio)).unwrap();
-
-        unsafe {
-            iplAudioBufferFree(context, &mut output_buffer);
-            iplBinauralEffectRelease(&mut binaural);
+        for (channel, output) in output_buffer.data.iter().zip(output.iter_mut()) {
+            output.extend(channel);
         }
     }
 
-    //let effect_settings = IPLAmbisonicsEncodeEffectSettings { maxOrder: 2 };
 
-    /*
-    let mut device = unsafe {
-        let mut device = ptr::null_mut();
-        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateComputeDevice(context, DEVICE_FILTER, &mut device));
-        device
-    };
-
-    let mut scene = unsafe {
-        let mut scene: IPLhandle = ptr::null_mut();
-        let mut mesh: IPLhandle = ptr::null_mut();
-
-        const NUM_TRIS: IPLint32 = 28;
-        const NUM_VERTS: IPLint32 = 48;
-
-        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateScene(context, device, SIM_SETTINGS, 1, &mut scene));
-        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateStaticMesh(scene, NUM_VERTS, NUM_TRIS, &mut mesh));
-
-        let tris: &mut [IPLTriangle] = slice::from_raw_parts_mut(BIN_DATA.as_ptr() as _, 336);
-        let vert: &mut [IPLVector3] = slice::from_raw_parts_mut(BIN_DATA.as_ptr().offset(336) as _, 576);
-
-        iplSetStaticMeshVertices(scene, mesh, vert.as_mut_ptr());
-        iplSetStaticMeshTriangles(scene, mesh, tris.as_mut_ptr());
-
-        iplFinalizeScene(scene, None);
-        scene
-    };
-
-    unsafe {
-        let file = CString::new("scene/scene.obj").unwrap();
-        iplDumpSceneToObjFile(scene, file.into_raw());
+    // Interleave
+    let mut output_interleaved = Vec::new();
+    for index in 0..output[0].len() {
+        for channel in output.iter() {
+            output_interleaved.push(channel[index]);
+        }
     }
 
-    let mut env = unsafe {
-        let mut env = ptr::null_mut();
-        assert_eq!(IPLerror::IPL_STATUS_SUCCESS, iplCreateEnvironment(context, device, SIM_SETTINGS, scene, ptr::null_mut(), &mut env));
-        env
-    };
+    use std::io::Write;
+    let mut file = File::create("eduardo_wrapper_binaural.raw").unwrap();
+    file.write(vf_to_u8(&output_interleaved)).unwrap();
 
-    eprintln!("context={:?}", context);
-    eprintln!("device={:?}", device);
-    eprintln!("scene={:?}", scene);
-    eprintln!("env={:?}", env);
-    */
-    */
     Ok(())
 }
