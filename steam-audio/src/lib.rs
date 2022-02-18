@@ -14,7 +14,7 @@ pub use orientation::Orientation;
 pub use raw::{read_ogg, write_file};
 
 pub mod prelude {
-    pub use crate::audio_buffer::AudioBuffer;
+    pub use crate::audio_buffer::{AudioBuffer, AudioBufferFrame};
     pub use crate::context::{Context, ContextSettings};
     pub use crate::effect::{
         ambisonics::{

@@ -1,4 +1,4 @@
-use steam_audio::{prelude::*, simulation::source::SourceSettings};
+use steam_audio::prelude::*;
 
 use std::error::Error;
 
@@ -16,7 +16,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let simulator = Simulator::new(&context, &simulation_settings)?;
 
     let source_settings = &SourceSettings::default();
-    let source = Source::new(&simulator, &source_settings);
+    let source = Source::new(&simulator, &source_settings)?;
 
     Ok(())
 }

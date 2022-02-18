@@ -2,7 +2,7 @@ use std::ffi::CStr;
 
 use steam_audio_sys::ffi;
 
-use crate::error::SteamAudioError;
+use crate::prelude::*;
 
 #[derive(Debug, Default)]
 pub struct ContextSettings {
