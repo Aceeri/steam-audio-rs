@@ -28,6 +28,6 @@ pub mod prelude {
     pub use crate::simulation::{
         direct::DirectSimulationFlags,
         simulation::{SimulationFlags, SimulationSettings, Simulator},
-        source::{DistanceAttenuationCallback, DistanceAttenuationModel},
+        source::{Source, SourceSettings, DistanceAttenuationCallback, DistanceAttenuationModel},
     };
 }
