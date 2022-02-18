@@ -6,10 +6,12 @@ pub mod hrtf;
 pub mod interleave;
 pub mod raw;
 pub mod simulation;
+pub mod orientation;
 
 pub use effect::ambisonics::ambisonic_order_channels;
 pub use interleave::{extend_deinterleaved, interleave};
 pub use raw::{read_ogg, write_file};
+pub use orientation::Orientation;
 
 pub mod prelude {
     pub use crate::audio_buffer::AudioBuffer;

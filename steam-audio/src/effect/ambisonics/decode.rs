@@ -1,6 +1,7 @@
 use glam::Vec3;
 use steam_audio_sys::ffi::{self, IPLAmbisonicsDecodeEffectParams};
 
+use crate::Orientation;
 use crate::audio_buffer::{AudioBuffer, AudioBufferFrame};
 use crate::context::Context;
 use crate::error::SteamAudioError;
@@ -60,36 +61,6 @@ impl AmbisonicsDecodeSettings {
             hrtf: hrtf,
             speakerLayout: self.speaker_layout.clone().into(),
             maxOrder: self.max_order as i32,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Orientation {
-    pub right: Vec3,
-    pub up: Vec3,
-    pub ahead: Vec3,
-    pub origin: Vec3,
-}
-
-impl Default for Orientation {
-    fn default() -> Self {
-        Self {
-            right: Vec3::X,
-            up: Vec3::Y,
-            ahead: -Vec3::Z,
-            origin: Vec3::ZERO,
-        }
-    }
-}
-
-impl Into<ffi::IPLCoordinateSpace3> for Orientation {
-    fn into(self) -> ffi::IPLCoordinateSpace3 {
-        ffi::IPLCoordinateSpace3 {
-            right: self.right.into(),
-            up: self.up.into(),
-            ahead: self.ahead.into(),
-            origin: self.origin.into(),
         }
     }
 }

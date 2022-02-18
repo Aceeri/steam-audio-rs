@@ -2,6 +2,7 @@ use steam_audio_sys::ffi;
 
 use bitflags::bitflags;
 
+use crate::Orientation;
 use crate::context::Context;
 use crate::error::SteamAudioError;
 use crate::hrtf::AudioSettings;
@@ -175,6 +176,42 @@ impl Drop for Simulator {
     fn drop(&mut self) {
         unsafe {
             ffi::iplSimulatorRelease(&mut self.0);
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct SimulationSharedInputs {
+    pub listener: Orientation,
+    pub num_rays: u32,
+    pub num_bounces: u32,
+    pub duration: f32,
+    pub order: u8,
+    pub irradiance_min_distance: f32,
+}
+
+impl Default for SimulationSharedInputs {
+    fn default() -> Self {
+        Self {
+            listener: Orientation::default(),
+            num_rays: 4096,
+            num_bounces: 16,
+            duration: 2.0,
+            order: 1,
+            irradiance_min_distance: 1.0,
+        }
+    }
+}
+
+impl Into<ffi::IPLSimulationSharedInputs> for SimulationSharedInputs {
+    fn into(self) -> ffi::IPLSimulationSharedInputs {
+        ffi::IPLSimulationSharedInputs {
+            listener: self.listener.into(),
+            numRays: self.num_rays as i32,
+            numBounces: self.num_bounces as i32,
+            duration: self.duration,
+            order: self.order as i32,
+            irradianceMinDistance: self.irradiance_min_distance,
         }
     }
 }
