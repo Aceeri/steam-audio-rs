@@ -71,12 +71,15 @@ impl BinauralEffect {
         self.inner
     }
 
-    pub fn apply_step_with_buffer(
+    pub fn apply_to_buffer(
         &self,
         params: &BinauralParams,
         mut frame: AudioBufferFrame,
         output_buffer: &mut AudioBuffer,
     ) -> Result<(), SteamAudioError> {
+        assert_eq!(frame.channels(), 1);
+        assert_eq!(output_buffer.channels(), 2);
+
         let mut output_ffi_buffer = unsafe { output_buffer.ffi_buffer_null() };
         let mut data_ptrs = unsafe { output_buffer.data_ptrs() };
         output_ffi_buffer.data = data_ptrs.as_mut_ptr();
@@ -84,7 +87,7 @@ impl BinauralEffect {
         let mut ipl_params = params.merge(self.hrtf);
 
         unsafe {
-            let effect = ffi::iplBinauralEffectApply(
+            let _effect_state = ffi::iplBinauralEffectApply(
                 self.inner,
                 &mut ipl_params,
                 &mut frame.0,
@@ -95,14 +98,14 @@ impl BinauralEffect {
         Ok(())
     }
 
-    pub fn apply_step(
+    pub fn apply(
         &self,
         audio_settings: &AudioSettings,
         params: &BinauralParams,
-        mut frame: AudioBufferFrame,
+        frame: AudioBufferFrame,
     ) -> Result<AudioBuffer, SteamAudioError> {
         let mut output_buffer = AudioBuffer::frame_buffer_with_channels(audio_settings, 2);
-        self.apply_step_with_buffer(params, frame, &mut output_buffer)?;
+        self.apply_to_buffer(params, frame, &mut output_buffer)?;
         Ok(output_buffer)
     }
 }

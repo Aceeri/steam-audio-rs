@@ -6,3 +6,6 @@ Cargo.lock
 lib/
 *.lib
 *.dll
+
+*.raw
+*.ogg

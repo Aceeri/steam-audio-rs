@@ -13,9 +13,9 @@ build = "build.rs"
 
 [dependencies]
 glam = "*"
+lewton = "*"
 
 [build-dependencies]
 bindgen = "0.59.2"
 
 [dev-dependencies]
-lewton = "*"

@@ -43,3 +43,12 @@ impl From<glam::Vec3> for ffi::IPLVector3 {
         }
     }
 }
+
+impl From<bool> for ffi::IPLbool {
+    fn from(b: bool) -> Self {
+        match b {
+            true => ffi::IPLbool::IPL_TRUE,
+            false => ffi::IPLbool::IPL_FALSE,
+        }
+    }
+}

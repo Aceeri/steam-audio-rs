@@ -95,6 +95,16 @@ impl<'a> AudioBufferIterator<'a> {
 use std::marker::PhantomData;
 pub struct AudioBufferFrame<'a>(pub(crate) ffi::IPLAudioBuffer, PhantomData<&'a ()>);
 
+impl<'a> AudioBufferFrame<'a> {
+    pub fn samples(&self) -> usize {
+        self.0.numSamples as usize
+    }
+
+    pub fn channels(&self) -> usize {
+        self.0.numChannels as usize
+    }
+}
+
 impl<'a> Iterator for AudioBufferIterator<'a> {
     type Item = AudioBufferFrame<'a>;
     fn next(&mut self) -> Option<Self::Item> {
