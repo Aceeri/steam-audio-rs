@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let audio = steam_audio::read_ogg(FILENAME)?;
     let audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
-    let simulation_settings = SimulationSettings::default();
+    let simulation_settings = SimulationSettings::from_audio_settings(&audio_settings);
     let simulation = Simulator::new(&context, &simulation_settings)?;
 
     Ok(())

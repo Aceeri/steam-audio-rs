@@ -4,6 +4,7 @@ use bitflags::bitflags;
 
 use crate::context::Context;
 use crate::error::SteamAudioError;
+use crate::hrtf::AudioSettings;
 
 bitflags! {
     pub struct SimulationFlags: i32 {
@@ -83,7 +84,7 @@ impl Into<ffi::IPLReflectionEffectType> for ReflectionEffectType {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct SimulationSettings {
     pub flags: SimulationFlags,
     pub scene_type: SceneType,
@@ -103,6 +104,27 @@ pub struct SimulationSettings {
     //pub opencl_device: IPLOpenCLDevice,
     //pub radeon_rays_device: IPLRadeonRaysDevice,
     //pub tan_device: IPLTrueAudioNextDevice,
+}
+
+impl SimulationSettings {
+    pub fn from_audio_settings(audio_settings: &AudioSettings) -> Self {
+        Self {
+            flags: SimulationFlags::default(),
+            scene_type: SceneType::default(),
+            reflection_type: ReflectionEffectType::default(),
+            max_num_occlusion_samples: 0,
+            max_num_rays: 4096,
+            num_diffuse_samples: 32,
+            max_duration: 1.0,
+            max_order: 1,
+            max_num_sources: 256,
+            num_threads: 2,
+            ray_batch_size: 0,
+            num_vis_samples: 0,
+            sampling_rate: audio_settings.sampling_rate(),
+            frame_size: audio_settings.frame_size(),
+        }
+    }
 }
 
 impl Into<ffi::IPLSimulationSettings> for &SimulationSettings {
