@@ -15,8 +15,9 @@ exclude = ["scene/*", "src/main.rs"]
 
 [dependencies]
 steam-audio-sys = { path = "../steam-audio-sys" }
-glam = "*"
-lewton = "*"
+glam = "0.20.2"
+lewton = "0.10.2"
+bitflags = "1.3.2"
 
 [dev-dependencies]
 

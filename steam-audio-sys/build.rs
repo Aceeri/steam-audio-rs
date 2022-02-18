@@ -12,7 +12,8 @@ fn main() {
     let builder = Builder::default()
         .header("headers/phonon.h")
         .header("headers/phonon_version.h")
-        .rustified_enum("IPL(.*)");
+        .rustified_enum("IPL(.*)")
+        .bitfield_enum("(.*)Flags");
 
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("bindgen.rs");

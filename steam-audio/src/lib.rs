@@ -5,6 +5,7 @@ pub mod error;
 pub mod hrtf;
 pub mod interleave;
 pub mod raw;
+pub mod simulation;
 
 pub use effect::ambisonics::ambisonic_order_channels;
 pub use interleave::{extend_deinterleaved, interleave};
