@@ -23,4 +23,7 @@ pub mod prelude {
     };
     pub use crate::error::SteamAudioError;
     pub use crate::hrtf::{AudioSettings, HRTFInterpolation, HRTFSettings, HRTF};
+    pub use crate::simulation::{
+        simulation::{SimulationFlags, SimulationSettings, Simulator},
+    };
 }
