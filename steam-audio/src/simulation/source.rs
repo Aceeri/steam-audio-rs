@@ -14,6 +14,21 @@ impl Into<ffi::IPLSourceSettings> for &SourceSettings {
     }
 }
 
+pub struct SimulationOutputs {
+    /*
+    pub direct: DirectEffectParams,
+    pub reflections: ReflectionEffectParams,
+    pub pathing: PathEffectParams,
+    */
+}
+
+impl From<ffi::IPLSimulationOutputs> for SimulationOutputs {
+    fn from(other: ffi::IPLSimulationOutputs) -> Self {
+        Self {
+        }
+    }
+}
+
 pub struct Source(ffi::IPLSource);
 
 impl Source {
@@ -31,6 +46,14 @@ impl Source {
 
     pub unsafe fn inner(&self) -> ffi::IPLSource {
         self.0
+    }
+
+    pub fn get_outputs(&self, flags: SimulationFlags) -> SimulationOutputs {
+        unsafe {
+            let mut outputs: ffi::IPLSimulationOutputs = std::mem::zeroed();
+            ffi::iplSourceGetOutputs(self.inner(), flags.into(), &mut outputs);
+            outputs.into()
+        }
     }
 }
 

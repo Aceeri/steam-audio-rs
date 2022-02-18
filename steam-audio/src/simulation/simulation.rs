@@ -2,10 +2,7 @@ use steam_audio_sys::ffi;
 
 use bitflags::bitflags;
 
-use crate::context::Context;
-use crate::error::SteamAudioError;
-use crate::hrtf::AudioSettings;
-use crate::Orientation;
+use crate::{prelude::*, Orientation};
 
 bitflags! {
     pub struct SimulationFlags: i32 {
@@ -26,6 +23,12 @@ impl Default for SimulationFlags {
 impl Into<ffi::IPLSimulationFlags> for SimulationFlags {
     fn into(self) -> ffi::IPLSimulationFlags {
         ffi::IPLSimulationFlags(self.bits())
+    }
+}
+
+impl From<ffi::IPLSimulationFlags> for SimulationFlags {
+    fn from(flags: ffi::IPLSimulationFlags) -> Self {
+        SimulationFlags { bits: flags.0 }
     }
 }
 
@@ -169,6 +172,18 @@ impl Simulator {
 
     pub unsafe fn inner(&self) -> ffi::IPLSimulator {
         self.0
+    }
+
+    pub fn commit(&mut self) {
+        unsafe {
+            ffi::iplSimulatorCommit(self.0);
+        }
+    }
+
+    pub fn add_source(&self, source: &Source) {
+        unsafe {
+            ffi::iplSourceAdd(source.inner(), self.0);
+        }
     }
 }
 

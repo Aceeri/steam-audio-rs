@@ -2,7 +2,7 @@
 name = "steam-audio-sys"
 version = "0.3.0"
 edition = "2021"
-authors = ["Connor McCluskey <conmcclusk@gmail.com>"]
+authors = ["germän gômez <germangb42@gmail.com>", "Connor McCluskey <conmcclusk@gmail.com>"]
 description = "Wrapper library for using steam audio in rust"
 repository = "https://github.com/aceeri/steam-audio-rs.git"
 readme = "README.md"
