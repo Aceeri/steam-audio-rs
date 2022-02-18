@@ -1,5 +1,3 @@
-
-
 use steam_audio_sys::ffi;
 
 use glam::Vec3;

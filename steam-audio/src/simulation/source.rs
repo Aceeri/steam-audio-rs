@@ -1,13 +1,12 @@
-
-use steam_audio_sys::ffi;
 use crate::{prelude::*, Orientation};
+use steam_audio_sys::ffi;
 
 #[derive(Debug, Default)]
 pub struct SourceSettings {
     flags: SimulationFlags,
 }
 
-impl Into<ffi::IPLSourceSettings> for SourceSettings {
+impl Into<ffi::IPLSourceSettings> for &SourceSettings {
     fn into(self) -> ffi::IPLSourceSettings {
         ffi::IPLSourceSettings {
             flags: self.flags.into(),
@@ -18,7 +17,7 @@ impl Into<ffi::IPLSourceSettings> for SourceSettings {
 pub struct Source(ffi::IPLSource);
 
 impl Source {
-    pub fn new(simulator: &Simulator, settings: SourceSettings) -> Result<Self, SteamAudioError> {
+    pub fn new(simulator: &Simulator, settings: &SourceSettings) -> Result<Self, SteamAudioError> {
         let mut source = Self(unsafe { std::mem::zeroed() });
         let mut ipl_settings: ffi::IPLSourceSettings = settings.into();
 
@@ -55,7 +54,7 @@ pub enum DistanceAttenuationModel {
     Callback {
         callback: Box<dyn DistanceAttenuationCallback>,
         dirty: bool,
-    }
+    },
 }
 
 impl Default for DistanceAttenuationModel {

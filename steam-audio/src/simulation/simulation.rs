@@ -2,10 +2,10 @@ use steam_audio_sys::ffi;
 
 use bitflags::bitflags;
 
-use crate::Orientation;
 use crate::context::Context;
 use crate::error::SteamAudioError;
 use crate::hrtf::AudioSettings;
+use crate::Orientation;
 
 bitflags! {
     pub struct SimulationFlags: i32 {

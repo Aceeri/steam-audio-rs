@@ -1,12 +1,12 @@
 use glam::Vec3;
 use steam_audio_sys::ffi::{self, IPLAmbisonicsDecodeEffectParams};
 
-use crate::Orientation;
 use crate::audio_buffer::{AudioBuffer, AudioBufferFrame};
 use crate::context::Context;
 use crate::error::SteamAudioError;
 use crate::hrtf::AudioSettings;
 use crate::prelude::HRTF;
+use crate::Orientation;
 
 // TODO
 #[derive(Debug, Clone)]
