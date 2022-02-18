@@ -77,6 +77,13 @@ impl AmbisonicsEncode {
 
         let mut ipl_params: IPLAmbisonicsEncodeEffectParams = params.into();
 
+        /*
+        dbg!(unsafe { frame.0.data });
+        dbg!(unsafe { *frame.0.data });
+        dbg!(unsafe { output_ffi_buffer.data });
+        dbg!(unsafe { *output_ffi_buffer.data });
+        dbg!();
+        */
         unsafe {
             let _effect_state = ffi::iplAmbisonicsEncodeEffectApply(
                 self.inner(),
@@ -84,6 +91,7 @@ impl AmbisonicsEncode {
                 &mut frame.0,
                 &mut output_ffi_buffer,
             );
+            //dbg!(_effect_state);
         }
 
         Ok(())

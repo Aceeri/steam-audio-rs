@@ -7,7 +7,7 @@ use steam_audio::prelude::*;
 use std::error::Error;
 use std::path::Path;
 
-const FILENAME: &'static str = "assets/children of the omnissiah.ogg";
+const FILENAME: &'static str = "assets/eduardo.ogg";
 
 fn binaural_effect(
     context: &Context,
@@ -65,7 +65,7 @@ fn ambisonics_encode_effect(
 
         let mut encode_params = AmbisonicsEncodeParams::default();
         encode_params.order = 2;
-        encode_params.direction = Vec3::new(time.cos(), 0.0, time.sin());
+        //encode_params.direction = Vec3::new(time.cos(), 0.0, time.sin());
 
         encode_effect.apply_to_buffer(&encode_params, frame, &mut output_buffer)?;
 

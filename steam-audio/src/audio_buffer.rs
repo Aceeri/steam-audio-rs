@@ -93,7 +93,9 @@ impl<'a> AudioBufferIterator<'a> {
 }
 
 use std::marker::PhantomData;
-pub struct AudioBufferFrame<'a>(pub(crate) ffi::IPLAudioBuffer, PhantomData<&'a ()>);
+
+#[derive(Debug)]
+pub struct AudioBufferFrame<'a>(pub ffi::IPLAudioBuffer, PhantomData<&'a ()>);
 
 impl<'a> AudioBufferFrame<'a> {
     pub fn samples(&self) -> usize {
@@ -111,7 +113,7 @@ impl<'a> Iterator for AudioBufferIterator<'a> {
         let frame = AudioBufferFrame(self.inner, PhantomData);
 
         if let Some(index) = self.current {
-            if index < self.frames {
+            if index < self.frames - 1 {
                 // Move the pointers ahead 1 frame size.
                 unsafe {
                     for ptr in &mut self.ptrs {
