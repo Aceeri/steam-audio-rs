@@ -7,8 +7,8 @@ use crate::prelude::*;
 pub struct StaticMeshSettings {
     pub vertices: Vec<Vec3>,
     pub triangles: Vec<[i32; 3]>,
-    pub material_indices: Vec<i32>,
     pub materials: Vec<Material>,
+    pub material_indices: Vec<i32>,
 }
 
 impl Into<StoredStaticMeshSettings> for StaticMeshSettings {
@@ -20,8 +20,8 @@ impl Into<StoredStaticMeshSettings> for StaticMeshSettings {
                 .iter()
                 .map(|arr| ffi::IPLTriangle { indices: *arr })
                 .collect(),
-            material_indices: self.material_indices,
             materials: self.materials.iter().map(|m| m.into()).collect(),
+            material_indices: self.material_indices,
         }
     }
 }
@@ -30,8 +30,8 @@ impl Into<StoredStaticMeshSettings> for StaticMeshSettings {
 struct StoredStaticMeshSettings {
     vertices: Vec<ffi::IPLVector3>,
     triangles: Vec<ffi::IPLTriangle>,
-    material_indices: Vec<i32>,
     materials: Vec<ffi::IPLMaterial>,
+    material_indices: Vec<i32>,
 }
 
 impl Into<ffi::IPLStaticMeshSettings> for &mut StoredStaticMeshSettings {
@@ -42,8 +42,8 @@ impl Into<ffi::IPLStaticMeshSettings> for &mut StoredStaticMeshSettings {
             numMaterials: self.materials.len() as i32,
             vertices: self.vertices.as_mut_ptr(),
             triangles: self.triangles.as_mut_ptr(),
-            materialIndices: self.material_indices.as_mut_ptr(),
             materials: self.materials.as_mut_ptr(),
+            materialIndices: self.material_indices.as_mut_ptr(),
         }
     }
 }

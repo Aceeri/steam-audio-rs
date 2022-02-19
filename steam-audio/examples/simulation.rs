@@ -1,3 +1,4 @@
+use glam::Vec3;
 use steam_audio::{prelude::*, simulation::simulation::SimulationSharedInputs};
 
 use std::error::Error;
@@ -20,8 +21,20 @@ fn main() -> Result<(), Box<dyn Error>> {
     let scene = Scene::new(&context, &scene_settings)?;
 
     let mesh_settings = StaticMeshSettings {
-
+        vertices: vec![
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(1.0, 0.0, 0.0),
+            Vec3::new(1.0, 1.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+        ],
+        triangles: vec![
+            [0, 1, 2],
+            [0, 2, 3],
+        ],
+        materials: vec![steam_audio::materials::GENERIC],
+        material_indices: vec![0, 0],
     };
+
     let mut mesh = StaticMesh::new(&scene, mesh_settings);
 
 
