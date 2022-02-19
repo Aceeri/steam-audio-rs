@@ -48,7 +48,7 @@ impl Into<ffi::IPLSceneSettings> for &SceneSettings {
     }
 }
 
-pub struct Scene(ffi::IPLScene);
+pub struct Scene(pub(crate) ffi::IPLScene);
 
 impl Scene {
     pub fn new(context: &Context, settings: &SceneSettings) -> Result<Self, SteamAudioError> {
@@ -56,7 +56,7 @@ impl Scene {
         let mut ipl_settings: ffi::IPLSceneSettings = settings.into();
 
         unsafe {
-            match ffi::iplSceneCreate(context.inner(), &mut ipl_settings, &mut scene.0) {
+            match ffi::iplSceneCreate(context.0, &mut ipl_settings, &mut scene.0) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(scene),
                 err => Err(SteamAudioError::IPLError(err)),
             }
@@ -69,13 +69,13 @@ impl Scene {
 
     pub fn commit(&mut self) {
         unsafe {
-            ffi::iplSceneCommit(self.inner());
+            ffi::iplSceneCommit(self.0);
         }
     }
 
     pub fn add_static_mesh(&self, static_mesh: &StaticMesh) {
         unsafe {
-            ffi::iplStaticMeshAdd(static_mesh.inner(), self.inner());
+            ffi::iplStaticMeshAdd(static_mesh.inner, self.0);
         }
     }
 }

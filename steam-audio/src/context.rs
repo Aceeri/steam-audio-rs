@@ -29,7 +29,7 @@ impl Into<ffi::IPLContextSettings> for ContextSettings {
         }
     }
 }
-pub struct Context(ffi::IPLContext);
+pub struct Context(pub(crate) ffi::IPLContext);
 
 impl Context {
     pub fn new(settings: ContextSettings) -> Result<Self, SteamAudioError> {
@@ -37,7 +37,7 @@ impl Context {
         let mut ipl_settings: ffi::IPLContextSettings = settings.into();
 
         unsafe {
-            match ffi::iplContextCreate(&mut ipl_settings, &mut context.inner()) {
+            match ffi::iplContextCreate(&mut ipl_settings, &mut context.0) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(context),
                 err => Err(SteamAudioError::IPLError(err)),
             }
@@ -52,7 +52,7 @@ impl Context {
 impl Drop for Context {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplContextRelease(&mut self.inner());
+            ffi::iplContextRelease(&mut self.0);
         }
     }
 }

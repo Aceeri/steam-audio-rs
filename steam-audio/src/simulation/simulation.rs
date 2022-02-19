@@ -155,7 +155,7 @@ impl Into<ffi::IPLSimulationSettings> for &SimulationSettings {
     }
 }
 
-pub struct Simulator(ffi::IPLSimulator);
+pub struct Simulator(pub(crate) ffi::IPLSimulator);
 
 impl Simulator {
     pub fn new(context: &Context, settings: &SimulationSettings) -> Result<Self, SteamAudioError> {
@@ -163,7 +163,7 @@ impl Simulator {
         let mut ipl_settings: ffi::IPLSimulationSettings = settings.into();
 
         unsafe {
-            match ffi::iplSimulatorCreate(context.inner(), &mut ipl_settings, &mut simulator.0) {
+            match ffi::iplSimulatorCreate(context.0, &mut ipl_settings, &mut simulator.0) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(simulator),
                 err => Err(SteamAudioError::IPLError(err)),
             }
@@ -176,31 +176,31 @@ impl Simulator {
 
     pub fn commit(&mut self) {
         unsafe {
-            ffi::iplSimulatorCommit(self.inner());
+            ffi::iplSimulatorCommit(self.0);
         }
     }
 
     pub fn add_source(&self, source: &Source) {
         unsafe {
-            ffi::iplSourceAdd(source.inner(), self.inner());
+            ffi::iplSourceAdd(source.0, self.0);
         }
     }
 
     pub fn run_direct(&mut self) {
         unsafe {
-            ffi::iplSimulatorRunDirect(self.inner());
+            ffi::iplSimulatorRunDirect(self.0);
         }
     }
 
     pub fn run_reflections(&mut self) {
         unsafe {
-            ffi::iplSimulatorRunReflections(self.inner());
+            ffi::iplSimulatorRunReflections(self.0);
         }
     }
 
     pub fn run_pathing(&mut self) {
         unsafe {
-            ffi::iplSimulatorRunPathing(self.inner());
+            ffi::iplSimulatorRunPathing(self.0);
         }
     }
 
@@ -213,13 +213,13 @@ impl Simulator {
         let mut shared_inputs: ffi::IPLSimulationSharedInputs = shared_inputs.into();
 
         unsafe {
-            ffi::iplSimulatorSetSharedInputs(self.inner(), flags.into(), &mut shared_inputs);
+            ffi::iplSimulatorSetSharedInputs(self.0, flags.into(), &mut shared_inputs);
         }
     }
 
     pub fn set_scene(&self, scene: &Scene) {
         unsafe {
-            ffi::iplSimulatorSetScene(self.inner(), scene.inner());
+            ffi::iplSimulatorSetScene(self.0, scene.0);
         }
     }
 }

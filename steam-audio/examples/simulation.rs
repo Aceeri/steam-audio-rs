@@ -6,32 +6,20 @@ use std::error::Error;
 const FILENAME: &'static str = "assets/eduardo.ogg";
 
 fn main() -> Result<(), Box<dyn Error>> {
-    dbg!();
     let context = Context::new(ContextSettings::default())?;
-    dbg!();
     let audio_settings = AudioSettings::default();
-    dbg!();
-    /*
     let hrtf_settings = HRTFSettings::default();
-    dbg!();
     let hrtf = HRTF::new(&context, &audio_settings, &hrtf_settings)?;
-    */
 
-    dbg!();
     let audio = steam_audio::read_ogg(FILENAME)?;
     let audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
 
-    dbg!();
     let simulation_settings = SimulationSettings::from_audio_settings(&audio_settings);
     let mut simulator = Simulator::new(&context, &simulation_settings)?;
 
-    dbg!();
     let scene_settings = SceneSettings::default();
-    dbg!();
     let mut scene = Scene::new(&context, &scene_settings)?;
 
-    dbg!();
-    /*
     let mesh_settings = StaticMeshSettings {
         vertices: vec![
             Vec3::new(0.0, 0.0, 0.0),
@@ -49,9 +37,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     dbg!();
     let static_mesh = StaticMesh::new(&scene, mesh_settings)?;
-    dbg!();
     scene.add_static_mesh(&static_mesh);
+    dbg!();
     scene.commit();
+    dbg!();
 
     dbg!();
     simulator.set_scene(&scene);
@@ -84,7 +73,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let outputs = source.get_outputs(SimulationFlags::DIRECT);
     dbg!(outputs);
-    */
 
     Ok(())
 }

@@ -49,7 +49,7 @@ impl Into<ffi::IPLStaticMeshSettings> for &mut StoredStaticMeshSettings {
 }
 
 pub struct StaticMesh {
-    inner: ffi::IPLStaticMesh,
+    pub(crate) inner: ffi::IPLStaticMesh,
 
     // Just to be safe we store these in the format that steam audio likes.
     //
@@ -67,7 +67,7 @@ impl StaticMesh {
         let mut ipl_settings: ffi::IPLStaticMeshSettings = (&mut mesh.settings).into();
 
         unsafe {
-            match ffi::iplStaticMeshCreate(scene.inner(), &mut ipl_settings, &mut mesh.inner()) {
+            match ffi::iplStaticMeshCreate(scene.0, &mut ipl_settings, &mut mesh.inner) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(mesh),
                 err => Err(SteamAudioError::IPLError(err)),
             }
@@ -82,7 +82,7 @@ impl StaticMesh {
 impl Drop for StaticMesh {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplStaticMeshRelease(&mut self.inner());
+            ffi::iplStaticMeshRelease(&mut self.inner);
         }
     }
 }

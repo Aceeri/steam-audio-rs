@@ -79,7 +79,7 @@ impl AudioSettings {
     }
 }
 
-pub struct HRTF(ffi::IPLHRTF);
+pub struct HRTF(pub(crate) ffi::IPLHRTF);
 
 impl HRTF {
     pub fn new(
@@ -93,10 +93,10 @@ impl HRTF {
 
         unsafe {
             match ffi::iplHRTFCreate(
-                context.inner(),
+                context.0,
                 &mut audio_ipl_settings,
                 &mut hrtf_ipl_settings,
-                &mut hrtf.inner(),
+                &mut hrtf.0,
             ) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(hrtf),
                 err => Err(SteamAudioError::IPLError(err)),
@@ -112,7 +112,7 @@ impl HRTF {
 impl Drop for HRTF {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplHRTFRelease(&mut self.inner());
+            ffi::iplHRTFRelease(&mut self.0);
         }
     }
 }

@@ -31,7 +31,7 @@ impl From<ffi::IPLSimulationOutputs> for SimulationOutputs {
     }
 }
 
-pub struct Source(ffi::IPLSource);
+pub struct Source(pub(crate) ffi::IPLSource);
 
 impl Source {
     pub fn new(simulator: &Simulator, settings: &SourceSettings) -> Result<Self, SteamAudioError> {
@@ -39,7 +39,7 @@ impl Source {
         let mut ipl_settings: ffi::IPLSourceSettings = settings.into();
 
         unsafe {
-            match ffi::iplSourceCreate(simulator.inner(), &mut ipl_settings, &mut source.0) {
+            match ffi::iplSourceCreate(simulator.0, &mut ipl_settings, &mut source.0) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(source),
                 err => Err(SteamAudioError::IPLError(err)),
             }
@@ -53,7 +53,7 @@ impl Source {
     pub fn get_outputs(&self, flags: SimulationFlags) -> SimulationOutputs {
         unsafe {
             let mut outputs: ffi::IPLSimulationOutputs = std::mem::zeroed();
-            ffi::iplSourceGetOutputs(self.inner(), flags.into(), &mut outputs);
+            ffi::iplSourceGetOutputs(self.0, flags.into(), &mut outputs);
             outputs.into()
         }
     }
@@ -61,7 +61,7 @@ impl Source {
     pub fn set_inputs(&self, flags: SimulationFlags, inputs: &SimulationInputs) {
         unsafe {
             let mut inputs: ffi::IPLSimulationInputs = inputs.into();
-            ffi::iplSourceSetInputs(self.inner(), flags.into(), &mut inputs);
+            ffi::iplSourceSetInputs(self.0, flags.into(), &mut inputs);
         }
     }
 }
