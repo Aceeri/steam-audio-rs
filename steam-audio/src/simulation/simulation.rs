@@ -176,13 +176,13 @@ impl Simulator {
 
     pub fn commit(&mut self) {
         unsafe {
-            ffi::iplSimulatorCommit(self.0);
+            ffi::iplSimulatorCommit(self.inner());
         }
     }
 
     pub fn add_source(&self, source: &Source) {
         unsafe {
-            ffi::iplSourceAdd(source.inner(), self.0);
+            ffi::iplSourceAdd(source.inner(), self.inner());
         }
     }
 

@@ -96,7 +96,7 @@ impl From<ffi::IPLTransmissionType> for TransmissionType {
     fn from(other: ffi::IPLTransmissionType) -> Self {
         match other {
             ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQINDEPENDENT => Self::FrequencyIndependent,
-            ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQINDEPENDENT => Self::FrequencyDependent,
+            ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQDEPENDENT => Self::FrequencyDependent,
             _ => Self::default(),
         }
     }
