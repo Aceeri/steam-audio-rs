@@ -1,6 +1,7 @@
 extern crate lewton;
 
 use glam::Vec3;
+use steam_audio::effect::ambisonics::decode::AmbisonicsDecodeSettings;
 use steam_audio::prelude::*;
 
 use std::error::Error;

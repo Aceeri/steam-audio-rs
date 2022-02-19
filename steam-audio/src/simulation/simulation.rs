@@ -185,6 +185,33 @@ impl Simulator {
             ffi::iplSourceAdd(source.inner(), self.0);
         }
     }
+
+    pub fn run_direct(&mut self) {
+        unsafe {
+            ffi::iplSimulatorRunDirect(self.inner());
+        }
+    }
+
+    pub fn run_reflections(&mut self) {
+        unsafe {
+            ffi::iplSimulatorRunReflections(self.inner());
+        }
+    }
+
+    pub fn run_pathing(&mut self) {
+        unsafe {
+            ffi::iplSimulatorRunPathing(self.inner());
+        }
+    }
+
+    pub fn set_shared_inputs(&self, flags: SimulationFlags, shared_inputs: &SimulationSharedInputs) {
+        // Uhhhh might need to store this somewhere to be safe?
+        let mut shared_inputs: ffi::IPLSimulationSharedInputs = shared_inputs.into();
+
+        unsafe {
+            ffi::iplSimulatorSetSharedInputs(self.inner(), flags.into(), &mut shared_inputs);
+        }
+    }
 }
 
 impl Drop for Simulator {
@@ -195,7 +222,7 @@ impl Drop for Simulator {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SimulationSharedInputs {
     pub listener: Orientation,
     pub num_rays: u32,
@@ -218,10 +245,10 @@ impl Default for SimulationSharedInputs {
     }
 }
 
-impl Into<ffi::IPLSimulationSharedInputs> for SimulationSharedInputs {
+impl Into<ffi::IPLSimulationSharedInputs> for &SimulationSharedInputs {
     fn into(self) -> ffi::IPLSimulationSharedInputs {
         ffi::IPLSimulationSharedInputs {
-            listener: self.listener.into(),
+            listener: self.listener.clone().into(),
             numRays: self.num_rays as i32,
             numBounces: self.num_bounces as i32,
             duration: self.duration,
