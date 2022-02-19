@@ -29,6 +29,7 @@ pub mod prelude {
     pub use crate::hrtf::{AudioSettings, HRTFInterpolation, HRTFSettings, HRTF};
     pub use crate::simulation::{
         material::Material,
+        static_mesh::{StaticMesh, StaticMeshSettings},
         scene::{Scene, SceneSettings},
         simulation::{SimulationFlags, SimulationSettings, Simulator},
         source::{

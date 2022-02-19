@@ -19,6 +19,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let scene_settings = SceneSettings::default();
     let scene = Scene::new(&context, &scene_settings)?;
 
+    let mesh_settings = StaticMeshSettings {
+
+    };
+    let mut mesh = StaticMesh::new(&scene, mesh_settings);
+
+
     dbg!();
     simulator.set_scene(&scene);
     dbg!();

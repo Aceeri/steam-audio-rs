@@ -5,9 +5,6 @@ use crate::prelude::*;
 
 #[derive(Debug, Clone)]
 pub struct StaticMeshSettings {
-    pub num_vertices: u32,
-    pub num_triangles: u32,
-    pub num_materials: u32,
     pub vertices: Vec<Vec3>,
     pub triangles: Vec<[i32; 3]>,
     pub material_indices: Vec<i32>,
@@ -17,9 +14,6 @@ pub struct StaticMeshSettings {
 impl Into<StoredStaticMeshSettings> for StaticMeshSettings {
     fn into(self) -> StoredStaticMeshSettings {
         StoredStaticMeshSettings {
-            num_vertices: self.num_vertices as i32,
-            num_triangles: self.num_vertices as i32,
-            num_materials: self.num_materials as i32,
             vertices: self.vertices.iter().map(|v| v.into()).collect(),
             triangles: self
                 .triangles
@@ -33,22 +27,19 @@ impl Into<StoredStaticMeshSettings> for StaticMeshSettings {
 }
 
 #[derive(Debug, Clone)]
-pub struct StoredStaticMeshSettings {
-    pub num_vertices: i32,
-    pub num_triangles: i32,
-    pub num_materials: i32,
-    pub vertices: Vec<ffi::IPLVector3>,
-    pub triangles: Vec<ffi::IPLTriangle>,
-    pub material_indices: Vec<i32>,
-    pub materials: Vec<ffi::IPLMaterial>,
+struct StoredStaticMeshSettings {
+    vertices: Vec<ffi::IPLVector3>,
+    triangles: Vec<ffi::IPLTriangle>,
+    material_indices: Vec<i32>,
+    materials: Vec<ffi::IPLMaterial>,
 }
 
 impl Into<ffi::IPLStaticMeshSettings> for &mut StoredStaticMeshSettings {
     fn into(self) -> ffi::IPLStaticMeshSettings {
         ffi::IPLStaticMeshSettings {
-            numVertices: self.num_vertices as i32,
-            numTriangles: self.num_vertices as i32,
-            numMaterials: self.num_materials as i32,
+            numVertices: self.vertices.len() as i32,
+            numTriangles: self.triangles.len() as i32,
+            numMaterials: self.materials.len() as i32,
             vertices: self.vertices.as_mut_ptr(),
             triangles: self.triangles.as_mut_ptr(),
             materialIndices: self.material_indices.as_mut_ptr(),
@@ -59,6 +50,7 @@ impl Into<ffi::IPLStaticMeshSettings> for &mut StoredStaticMeshSettings {
 
 pub struct StaticMesh {
     inner: ffi::IPLStaticMesh,
+
     // Just to be safe we store these in the format that steam audio likes.
     //
     // We also need to keep this here so the pointers don't randomly die when the mesh settings get dropped.
