@@ -72,6 +72,12 @@ impl Scene {
             ffi::iplSceneCommit(self.inner());
         }
     }
+
+    pub fn add_static_mesh(&self, static_mesh: &StaticMesh) {
+        unsafe {
+            ffi::iplStaticMeshAdd(static_mesh.inner(), self.inner());
+        }
+    }
 }
 
 impl Drop for Scene {
