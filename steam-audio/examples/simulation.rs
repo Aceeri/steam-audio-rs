@@ -12,8 +12,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let audio = steam_audio::read_ogg(FILENAME)?;
     let audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
+
     let simulation_settings = SimulationSettings::from_audio_settings(&audio_settings);
     let mut simulator = Simulator::new(&context, &simulation_settings)?;
+
+    let scene_settings = SceneSettings::default();
+    let scene = Scene::new(&context, &scene_settings)?;
+
+    dbg!();
+    simulator.set_scene(&scene);
+    dbg!();
+    simulator.commit();
+    dbg!();
 
     let source_settings = &SourceSettings::default();
     let source = Source::new(&simulator, &source_settings)?;

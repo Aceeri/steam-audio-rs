@@ -212,6 +212,12 @@ impl Simulator {
             ffi::iplSimulatorSetSharedInputs(self.inner(), flags.into(), &mut shared_inputs);
         }
     }
+
+    pub fn set_scene(&self, scene: &Scene) {
+        unsafe {
+            ffi::iplSimulatorSetScene(self.inner(), scene.inner());
+        }
+    }
 }
 
 impl Drop for Simulator {

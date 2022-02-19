@@ -29,5 +29,6 @@ pub mod prelude {
     pub use crate::simulation::{
         simulation::{SimulationFlags, SimulationSettings, Simulator},
         source::{Source, SourceSettings, DistanceAttenuationCallback, DistanceAttenuationModel, SimulationInputs},
+        scene::{Scene, SceneSettings},
     };
 }
