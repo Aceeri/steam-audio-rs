@@ -76,7 +76,6 @@ pub enum TransmissionType {
     FrequencyDependent,
 }
 
-
 impl Default for TransmissionType {
     fn default() -> Self {
         Self::FrequencyDependent
@@ -84,10 +83,14 @@ impl Default for TransmissionType {
 }
 
 impl Into<ffi::IPLTransmissionType> for TransmissionType {
-    fn into(self) -> ffi::IPLTransmissionType{
+    fn into(self) -> ffi::IPLTransmissionType {
         match self {
-            Self::FrequencyIndependent => ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQINDEPENDENT,
-            Self::FrequencyDependent => ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQINDEPENDENT,
+            Self::FrequencyIndependent => {
+                ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQINDEPENDENT
+            }
+            Self::FrequencyDependent => {
+                ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQINDEPENDENT
+            }
         }
     }
 }
@@ -95,8 +98,12 @@ impl Into<ffi::IPLTransmissionType> for TransmissionType {
 impl From<ffi::IPLTransmissionType> for TransmissionType {
     fn from(other: ffi::IPLTransmissionType) -> Self {
         match other {
-            ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQINDEPENDENT => Self::FrequencyIndependent,
-            ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQDEPENDENT => Self::FrequencyDependent,
+            ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQINDEPENDENT => {
+                Self::FrequencyIndependent
+            }
+            ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQDEPENDENT => {
+                Self::FrequencyDependent
+            }
             _ => Self::default(),
         }
     }
@@ -112,7 +119,7 @@ pub struct DirectEffectParams {
     occlusion: f32,
 
     air_absorption: [f32; 3], // 3-band EQ coefficients
-    transmission: [f32; 3], 
+    transmission: [f32; 3],
 }
 
 impl Default for DirectEffectParams {
@@ -132,7 +139,7 @@ impl Default for DirectEffectParams {
 }
 
 impl Into<ffi::IPLDirectEffectParams> for &DirectEffectParams {
-    fn into(self) -> ffi::IPLDirectEffectParams{
+    fn into(self) -> ffi::IPLDirectEffectParams {
         ffi::IPLDirectEffectParams {
             flags: self.flags.into(),
             transmissionType: self.transmission_type.into(),

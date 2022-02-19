@@ -22,13 +22,16 @@ pub mod prelude {
             encode::{AmbisonicsEncode, AmbisonicsEncodeParams},
         },
         binaural::{BinauralEffect, BinauralParams},
-        direct::{DirectEffect, DirectEffectParams, DirectEffectFlags, DirectSimulationFlags},
+        direct::{DirectEffect, DirectEffectFlags, DirectEffectParams, DirectSimulationFlags},
     };
     pub use crate::error::SteamAudioError;
     pub use crate::hrtf::{AudioSettings, HRTFInterpolation, HRTFSettings, HRTF};
     pub use crate::simulation::{
-        simulation::{SimulationFlags, SimulationSettings, Simulator},
-        source::{Source, SourceSettings, DistanceAttenuationCallback, DistanceAttenuationModel, SimulationInputs},
         scene::{Scene, SceneSettings},
+        simulation::{SimulationFlags, SimulationSettings, Simulator},
+        source::{
+            DistanceAttenuationCallback, DistanceAttenuationModel, SimulationInputs, Source,
+            SourceSettings,
+        },
     };
 }

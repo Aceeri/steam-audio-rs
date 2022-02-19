@@ -81,9 +81,7 @@ pub trait DistanceAttenuationCallback {
 #[derive(Debug, Clone)]
 pub enum DistanceAttenuationModel {
     Default,
-    InverseDistance {
-        min_distance: f32,
-    },
+    InverseDistance { min_distance: f32 },
 }
 
 impl Default for DistanceAttenuationModel {
@@ -91,7 +89,6 @@ impl Default for DistanceAttenuationModel {
         Self::Default
     }
 }
-
 
 impl Into<ffi::IPLDistanceAttenuationModel> for DistanceAttenuationModel {
     fn into(self) -> ffi::IPLDistanceAttenuationModel {
@@ -105,11 +102,10 @@ impl Into<ffi::IPLDistanceAttenuationModel> for DistanceAttenuationModel {
 
         match self {
             Self::Default => {
-                model.type_ = ffi::IPLDistanceAttenuationModelType::IPL_DISTANCEATTENUATIONTYPE_DEFAULT;
+                model.type_ =
+                    ffi::IPLDistanceAttenuationModelType::IPL_DISTANCEATTENUATIONTYPE_DEFAULT;
             }
-            Self::InverseDistance {
-                min_distance
-            }=> {
+            Self::InverseDistance { min_distance } => {
                 model.type_ = ffi::IPLDistanceAttenuationModelType::IPL_DISTANCEATTENUATIONTYPE_INVERSEDISTANCE;
                 model.minDistance = min_distance;
             }
@@ -122,9 +118,7 @@ impl Into<ffi::IPLDistanceAttenuationModel> for DistanceAttenuationModel {
 #[derive(Debug, Clone)]
 pub enum AirAbsorptionModel {
     Default,
-    Exponential {
-        coefficients: [f32; 3],
-    },
+    Exponential { coefficients: [f32; 3] },
 }
 
 impl Default for AirAbsorptionModel {
@@ -147,9 +141,7 @@ impl Into<ffi::IPLAirAbsorptionModel> for AirAbsorptionModel {
             Self::Default => {
                 model.type_ = ffi::IPLAirAbsorptionModelType::IPL_AIRABSORPTIONTYPE_DEFAULT;
             }
-            Self::Exponential {
-                coefficients
-            }=> {
+            Self::Exponential { coefficients } => {
                 model.type_ = ffi::IPLAirAbsorptionModelType::IPL_AIRABSORPTIONTYPE_EXPONENTIAL;
                 model.coefficients = coefficients;
             }
@@ -259,7 +251,7 @@ impl Default for SimulationInputs {
 
 impl Into<ffi::IPLSimulationInputs> for &SimulationInputs {
     fn into(self) -> ffi::IPLSimulationInputs {
-        ffi::IPLSimulationInputs  {
+        ffi::IPLSimulationInputs {
             flags: self.flags.into(),
             directFlags: self.direct_flags.into(),
             source: self.source.clone().into(),
@@ -276,7 +268,10 @@ impl Into<ffi::IPLSimulationInputs> for &SimulationInputs {
             bakedDataIdentifier: ffi::IPLBakedDataIdentifier {
                 type_: ffi::IPLBakedDataType::IPL_BAKEDDATATYPE_PATHING,
                 variation: ffi::IPLBakedDataVariation::IPL_BAKEDDATAVARIATION_DYNAMIC,
-                endpointInfluence: ffi::IPLSphere { center: glam::Vec3::ZERO.into(), radius: 0.0 },
+                endpointInfluence: ffi::IPLSphere {
+                    center: glam::Vec3::ZERO.into(),
+                    radius: 0.0,
+                },
             },
             pathingProbes: std::ptr::null_mut(),
             visRadius: self.visible_radius,

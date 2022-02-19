@@ -204,7 +204,11 @@ impl Simulator {
         }
     }
 
-    pub fn set_shared_inputs(&self, flags: SimulationFlags, shared_inputs: &SimulationSharedInputs) {
+    pub fn set_shared_inputs(
+        &self,
+        flags: SimulationFlags,
+        shared_inputs: &SimulationSharedInputs,
+    ) {
         // Uhhhh might need to store this somewhere to be safe?
         let mut shared_inputs: ffi::IPLSimulationSharedInputs = shared_inputs.into();
 

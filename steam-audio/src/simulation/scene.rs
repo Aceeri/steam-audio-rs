@@ -1,5 +1,3 @@
-
-
 use steam_audio_sys::ffi;
 
 use crate::prelude::*;
@@ -25,7 +23,7 @@ impl Default for SceneSettings {
 
 impl Into<ffi::IPLSceneSettings> for &SceneSettings {
     fn into(self) -> ffi::IPLSceneSettings {
-        let mut model = ffi::IPLSceneSettings  {
+        let mut model = ffi::IPLSceneSettings {
             type_: ffi::IPLSceneType::IPL_SCENETYPE_DEFAULT,
             closestHitCallback: None,
             anyHitCallback: None,
@@ -37,19 +35,17 @@ impl Into<ffi::IPLSceneSettings> for &SceneSettings {
         };
 
         match self {
-            SceneSettings::Default =>  {
+            SceneSettings::Default => {
                 model.type_ = ffi::IPLSceneType::IPL_SCENETYPE_DEFAULT;
-            }
-            /*
-            Self::Embree => { }
-            Self::RadeonRays => { }
-            Self::Custom => { }
-            */
+            } /*
+              Self::Embree => { }
+              Self::RadeonRays => { }
+              Self::Custom => { }
+              */
         }
 
         model
     }
-
 }
 
 pub struct Scene(ffi::IPLScene);
@@ -76,7 +72,6 @@ impl Scene {
             ffi::iplSceneCommit(self.inner());
         }
     }
-
 }
 
 impl Drop for Scene {

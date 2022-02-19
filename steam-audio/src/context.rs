@@ -37,7 +37,7 @@ impl Context {
         let mut ipl_settings: ffi::IPLContextSettings = settings.into();
 
         unsafe {
-            match ffi::iplContextCreate(&mut ipl_settings, &mut context.0) {
+            match ffi::iplContextCreate(&mut ipl_settings, &mut context.inner()) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(context),
                 err => Err(SteamAudioError::IPLError(err)),
             }
@@ -52,7 +52,7 @@ impl Context {
 impl Drop for Context {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplContextRelease(&mut self.0);
+            ffi::iplContextRelease(&mut self.inner());
         }
     }
 }

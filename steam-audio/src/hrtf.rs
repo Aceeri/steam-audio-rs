@@ -96,7 +96,7 @@ impl HRTF {
                 context.inner(),
                 &mut audio_ipl_settings,
                 &mut hrtf_ipl_settings,
-                &mut hrtf.0,
+                &mut hrtf.inner(),
             ) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(hrtf),
                 err => Err(SteamAudioError::IPLError(err)),
@@ -112,7 +112,7 @@ impl HRTF {
 impl Drop for HRTF {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplHRTFRelease(&mut self.0);
+            ffi::iplHRTFRelease(&mut self.inner());
         }
     }
 }

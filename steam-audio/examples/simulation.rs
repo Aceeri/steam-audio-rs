@@ -28,14 +28,20 @@ fn main() -> Result<(), Box<dyn Error>> {
     let source_settings = &SourceSettings::default();
     let source = Source::new(&simulator, &source_settings)?;
 
-    source.set_inputs(SimulationFlags::DIRECT, &SimulationInputs {
-        ..Default::default()
-    });
+    source.set_inputs(
+        SimulationFlags::DIRECT,
+        &SimulationInputs {
+            ..Default::default()
+        },
+    );
     dbg!();
     simulator.add_source(&source);
-    simulator.set_shared_inputs(SimulationFlags::DIRECT, &SimulationSharedInputs {
-        ..Default::default()
-    });
+    simulator.set_shared_inputs(
+        SimulationFlags::DIRECT,
+        &SimulationSharedInputs {
+            ..Default::default()
+        },
+    );
     dbg!();
     simulator.commit();
     dbg!();

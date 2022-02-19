@@ -44,8 +44,27 @@ impl From<glam::Vec3> for ffi::IPLVector3 {
     }
 }
 
+impl From<&glam::Vec3> for ffi::IPLVector3 {
+    fn from(vec: &glam::Vec3) -> Self {
+        ffi::IPLVector3 {
+            x: vec.x,
+            y: vec.y,
+            z: vec.z,
+        }
+    }
+}
+
 impl From<bool> for ffi::IPLbool {
     fn from(b: bool) -> Self {
+        match b {
+            true => ffi::IPLbool::IPL_TRUE,
+            false => ffi::IPLbool::IPL_FALSE,
+        }
+    }
+}
+
+impl From<&bool> for ffi::IPLbool {
+    fn from(b: &bool) -> Self {
         match b {
             true => ffi::IPLbool::IPL_TRUE,
             false => ffi::IPLbool::IPL_FALSE,
