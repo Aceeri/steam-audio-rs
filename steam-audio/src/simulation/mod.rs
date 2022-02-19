@@ -1,3 +1,4 @@
+pub mod material;
 pub mod scene;
 pub mod simulation;
 pub mod source;

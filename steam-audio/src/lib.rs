@@ -12,6 +12,7 @@ pub use effect::ambisonics::ambisonic_order_channels;
 pub use interleave::{extend_deinterleaved, interleave};
 pub use orientation::Orientation;
 pub use raw::{read_ogg, write_file};
+pub use simulation::material::materials;
 
 pub mod prelude {
     pub use crate::audio_buffer::{AudioBuffer, AudioBufferFrame};
@@ -27,6 +28,7 @@ pub mod prelude {
     pub use crate::error::SteamAudioError;
     pub use crate::hrtf::{AudioSettings, HRTFInterpolation, HRTFSettings, HRTF};
     pub use crate::simulation::{
+        material::Material,
         scene::{Scene, SceneSettings},
         simulation::{SimulationFlags, SimulationSettings, Simulator},
         source::{
