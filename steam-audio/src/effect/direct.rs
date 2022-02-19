@@ -64,6 +64,12 @@ impl Into<ffi::IPLDirectEffectFlags> for DirectEffectFlags {
     }
 }
 
+impl From<ffi::IPLDirectEffectFlags> for DirectEffectFlags {
+    fn from(other: ffi::IPLDirectEffectFlags) -> Self {
+        Self { bits: other.0 }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub enum TransmissionType {
     FrequencyIndependent,
@@ -86,6 +92,17 @@ impl Into<ffi::IPLTransmissionType> for TransmissionType {
     }
 }
 
+impl From<ffi::IPLTransmissionType> for TransmissionType {
+    fn from(other: ffi::IPLTransmissionType) -> Self {
+        match other {
+            ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQINDEPENDENT => Self::FrequencyIndependent,
+            ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQINDEPENDENT => Self::FrequencyDependent,
+            _ => Self::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct DirectEffectParams {
     flags: DirectEffectFlags,
     transmission_type: TransmissionType,
@@ -130,6 +147,21 @@ impl Into<ffi::IPLDirectEffectParams> for &DirectEffectParams {
     }
 }
 
+impl From<ffi::IPLDirectEffectParams> for DirectEffectParams {
+    fn from(other: ffi::IPLDirectEffectParams) -> Self {
+        Self {
+            flags: other.flags.into(),
+            transmission_type: other.transmissionType.into(),
+
+            distance_attenuation: other.distanceAttenuation,
+            directivity: other.directivity,
+            occlusion: other.occlusion,
+
+            air_absorption: other.airAbsorption,
+            transmission: other.transmission,
+        }
+    }
+}
 
 pub struct DirectEffect(ffi::IPLDirectEffect);
 

@@ -15,8 +15,8 @@ impl Into<ffi::IPLSourceSettings> for &SourceSettings {
 }
 
 pub struct SimulationOutputs {
-    /*
     pub direct: DirectEffectParams,
+    /*
     pub reflections: ReflectionEffectParams,
     pub pathing: PathEffectParams,
     */
@@ -25,6 +25,7 @@ pub struct SimulationOutputs {
 impl From<ffi::IPLSimulationOutputs> for SimulationOutputs {
     fn from(other: ffi::IPLSimulationOutputs) -> Self {
         Self {
+            direct: other.direct.into(),
         }
     }
 }
