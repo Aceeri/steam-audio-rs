@@ -11,19 +11,12 @@ bitflags! {
         const DIRECTIVITY = ffi::IPLDirectSimulationFlags::IPL_DIRECTSIMULATIONFLAGS_DIRECTIVITY.0;
         const OCCLUSION = ffi::IPLDirectSimulationFlags::IPL_DIRECTSIMULATIONFLAGS_OCCLUSION.0;
         const TRANSMISSION = ffi::IPLDirectSimulationFlags::IPL_DIRECTSIMULATIONFLAGS_TRANSMISSION.0;
-
-        const ALL = DirectSimulationFlags::DISTANCE_ATTENUATION.bits()
-            | DirectSimulationFlags::AIR_ABSORPTION.bits()
-            | DirectSimulationFlags::DIRECTIVITY.bits()
-            | DirectSimulationFlags::OCCLUSION.bits()
-            | DirectSimulationFlags::TRANSMISSION.bits();
-        const DEFAULT = DirectSimulationFlags::DISTANCE_ATTENUATION.bits();
     }
 }
 
 impl Default for DirectSimulationFlags {
     fn default() -> Self {
-        Self::DEFAULT
+        Self::DISTANCE_ATTENUATION
     }
 }
 
@@ -41,20 +34,12 @@ bitflags! {
         const DIRECTIVITY = ffi::IPLDirectEffectFlags::IPL_DIRECTEFFECTFLAGS_APPLYDIRECTIVITY.0;
         const OCCLUSION = ffi::IPLDirectEffectFlags::IPL_DIRECTEFFECTFLAGS_APPLYOCCLUSION.0;
         const TRANSMISSION = ffi::IPLDirectEffectFlags::IPL_DIRECTEFFECTFLAGS_APPLYTRANSMISSION.0;
-
-        const ALL = DirectEffectFlags::DISTANCE_ATTENUATION.bits()
-            | DirectEffectFlags::AIR_ABSORPTION.bits()
-            | DirectEffectFlags::DIRECTIVITY.bits()
-            | DirectEffectFlags::OCCLUSION.bits()
-            | DirectEffectFlags::TRANSMISSION.bits();
-        const DEFAULT = DirectEffectFlags::DISTANCE_ATTENUATION.bits()
-            | DirectEffectFlags::AIR_ABSORPTION.bits();
     }
 }
 
 impl Default for DirectEffectFlags {
     fn default() -> Self {
-        Self::DEFAULT
+        Self::DISTANCE_ATTENUATION
     }
 }
 
@@ -171,7 +156,10 @@ impl From<ffi::IPLDirectEffectParams> for DirectEffectParams {
     }
 }
 
-pub struct DirectEffect(ffi::IPLDirectEffect);
+pub struct DirectEffect {
+    inner: ffi::IPLDirectEffect,
+    channels: usize,
+}
 
 impl DirectEffect {
     pub fn new(
@@ -179,7 +167,10 @@ impl DirectEffect {
         audio_settings: &AudioSettings,
         num_channels: u32,
     ) -> Result<Self, SteamAudioError> {
-        let mut effect = Self(unsafe { std::mem::zeroed() });
+        let mut effect = Self {
+            inner: unsafe { std::mem::zeroed() },
+            channels: num_channels as usize,
+        };
 
         let mut effect_settings = ffi::IPLDirectEffectSettings {
             numChannels: num_channels as i32,
@@ -199,7 +190,7 @@ impl DirectEffect {
     }
 
     pub unsafe fn inner(&self) -> ffi::IPLDirectEffect {
-        self.0
+        self.inner
     }
 
     pub fn apply_to_buffer(
@@ -208,8 +199,8 @@ impl DirectEffect {
         mut frame: AudioBufferFrame,
         output_buffer: &mut AudioBuffer,
     ) -> Result<(), SteamAudioError> {
-        assert_eq!(frame.channels(), 1);
-        assert_eq!(output_buffer.channels(), 2);
+        assert_eq!(frame.channels(), self.channels);
+        assert_eq!(output_buffer.channels(), self.channels);
 
         let mut output_ffi_buffer = unsafe { output_buffer.ffi_buffer_null() };
         let mut data_ptrs = unsafe { output_buffer.data_ptrs() };
@@ -219,7 +210,7 @@ impl DirectEffect {
 
         unsafe {
             let _effect_state = ffi::iplDirectEffectApply(
-                self.inner(),
+                self.inner,
                 &mut ipl_params,
                 &mut frame.0,
                 &mut output_ffi_buffer,
@@ -235,7 +226,7 @@ impl DirectEffect {
         params: &DirectEffectParams,
         frame: AudioBufferFrame,
     ) -> Result<AudioBuffer, SteamAudioError> {
-        let mut output_buffer = AudioBuffer::frame_buffer_with_channels(audio_settings, 2);
+        let mut output_buffer = AudioBuffer::frame_buffer_with_channels(audio_settings, self.channels);
         self.apply_to_buffer(params, frame, &mut output_buffer)?;
         Ok(output_buffer)
     }
@@ -244,7 +235,7 @@ impl DirectEffect {
 impl Drop for DirectEffect {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplDirectEffectRelease(&mut self.inner());
+            ffi::iplDirectEffectRelease(&mut self.inner);
         }
     }
 }

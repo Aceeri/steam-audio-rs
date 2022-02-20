@@ -127,7 +127,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let audio = steam_audio::read_ogg(FILENAME)?;
     let audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
-    //binaural_effect(&context, &audio_settings, &hrtf, audio_buffer.clone())?;
+    binaural_effect(&context, &audio_settings, &hrtf, audio_buffer.clone())?;
     ambisonics_effect(&context, &audio_settings, &hrtf, audio_buffer.clone())?;
 
     Ok(())

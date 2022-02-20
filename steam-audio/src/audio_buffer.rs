@@ -58,6 +58,14 @@ impl AudioBuffer {
     pub fn time_seconds(&self, audio_settings: &AudioSettings) -> f64 {
         self.total_samples() as f64 / audio_settings.sampling_rate() as f64
     }
+
+    pub fn current_frame<'a>(&'a self) -> (Vec<*mut f32>, AudioBufferFrame<'a>) {
+        let mut ipl_buffer = unsafe { self.ffi_buffer_null() };
+        let mut ptrs = unsafe { self.data_ptrs() };
+        ipl_buffer.data = ptrs.as_mut_ptr();
+
+        (ptrs, AudioBufferFrame(ipl_buffer, PhantomData))
+    }
 }
 
 impl<'a> IntoIterator for &'a AudioBuffer {
