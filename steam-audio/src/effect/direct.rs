@@ -96,15 +96,15 @@ impl From<ffi::IPLTransmissionType> for TransmissionType {
 
 #[derive(Debug, Clone)]
 pub struct DirectEffectParams {
-    flags: DirectEffectFlags,
-    transmission_type: TransmissionType,
+    pub flags: DirectEffectFlags,
+    pub transmission_type: TransmissionType,
 
-    distance_attenuation: f32,
-    directivity: f32,
-    occlusion: f32,
+    pub distance_attenuation: f32,
+    pub directivity: f32,
+    pub occlusion: f32,
 
-    air_absorption: [f32; 3], // 3-band EQ coefficients
-    transmission: [f32; 3],
+    pub air_absorption: [f32; 3], // 3-band EQ coefficients
+    pub transmission: [f32; 3],
 }
 
 impl Default for DirectEffectParams {
@@ -141,7 +141,6 @@ impl Into<ffi::IPLDirectEffectParams> for &DirectEffectParams {
 
 impl From<ffi::IPLDirectEffectParams> for DirectEffectParams {
     fn from(other: ffi::IPLDirectEffectParams) -> Self {
-        dbg!(other);
         Self {
             flags: other.flags.into(),
             transmission_type: other.transmissionType.into(),
@@ -178,10 +177,10 @@ impl DirectEffect {
 
         unsafe {
             match ffi::iplDirectEffectCreate(
-                context.inner(),
+                context.inner,
                 &mut audio_settings.into(),
                 &mut effect_settings,
-                &mut effect.inner(),
+                &mut effect.inner,
             ) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(effect),
                 err => Err(SteamAudioError::IPLError(err)),

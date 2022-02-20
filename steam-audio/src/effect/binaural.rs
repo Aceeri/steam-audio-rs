@@ -51,10 +51,10 @@ impl BinauralEffect {
 
         unsafe {
             match ffi::iplBinauralEffectCreate(
-                context.inner(),
+                context.inner,
                 &mut audio_settings.into(),
                 &mut effect_settings,
-                &mut effect.inner(),
+                &mut effect.inner,
             ) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(effect),
                 err => Err(SteamAudioError::IPLError(err)),
@@ -83,7 +83,7 @@ impl BinauralEffect {
 
         unsafe {
             let _effect_state = ffi::iplBinauralEffectApply(
-                self.inner(),
+                self.inner,
                 &mut ipl_params,
                 &mut frame.0,
                 &mut output_ffi_buffer,
@@ -108,7 +108,7 @@ impl BinauralEffect {
 impl Drop for BinauralEffect {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplBinauralEffectRelease(&mut self.inner());
+            ffi::iplBinauralEffectRelease(&mut self.inner);
         }
     }
 }

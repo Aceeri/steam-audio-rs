@@ -1,5 +1,5 @@
 use glam::Vec3;
-use steam_audio::{prelude::*, simulation::simulation::SimulationSharedInputs, Orientation};
+use steam_audio::{prelude::*, simulation::{simulation::SimulationSharedInputs, source::OcclusionType}, Orientation};
 
 use std::{error::Error, path::Path};
 
@@ -42,10 +42,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mesh_settings = StaticMeshSettings {
         vertices: vec![
-            Vec3::new(0.0, 0.0, 0.5),
-            Vec3::new(1.0, 0.0, 0.5),
-            Vec3::new(1.0, 1.0, 0.5),
-            Vec3::new(0.0, 1.0, 0.5),
+            Vec3::new(-5.0, 5.0, 0.25),
+            Vec3::new(-5.0, -5.0, 0.25),
+            Vec3::new(5.0, -5.0, 0.25),
+            Vec3::new(5.0, 5.0, 0.25),
         ],
         triangles: vec![
             [0, 1, 2],
@@ -66,11 +66,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let source_settings = &SourceSettings::default();
     let source = Source::new(&simulator, &source_settings)?;
 
+    let listener = Vec3::new(0.0, 0.0, 0.0);
+
     simulator.set_shared_inputs(
         SimulationFlags::all(),
         &SimulationSharedInputs {
             listener: Orientation {
-                origin: Vec3::new(0.0, 0.0, 0.0),
+                origin: listener,
                 ..Default::default()
             },
             ..Default::default()
@@ -98,9 +100,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     for (frame_index, frame) in audio_buffer.into_iter().enumerate() {
         let time = (frame_index as f32 / frame_length as f32) * std::f32::consts::TAU * 5.0;
 
+        let position = Vec3::new(time.cos() * 2.0, 0.0, time.sin() * 2.0);
+
+        let direction = (position - listener).normalize();
+
         let mut params = BinauralParams::default();
         params.interpolation = HRTFInterpolation::Bilinear;
-        params.direction = Vec3::new(time.cos(), 0.0, time.sin());
+        params.direction = direction.into();
 
         binaural_effect.apply_to_buffer(&params, frame, &mut binaural_output_buffer)?;
         let (ptrs, binaural_frame) = binaural_output_buffer.current_frame();
@@ -112,10 +118,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             &SimulationInputs {
                 flags: SimulationFlags::all(),
                 direct_flags: DirectSimulationFlags::all(),
-                //occlusion_type: OcclusionType::Raycast,
+                occlusion_type: OcclusionType::Raycast,
                 occlusion_radius: 0.0,
                 source: Orientation {
-                    origin: Vec3::new(time.cos(), 0.0, time.sin()),
+                    origin: position.into(),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -123,10 +129,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         );
         simulator.commit();
         simulator.run_direct();
-        let outputs = source.get_outputs(SimulationFlags::all());
-        let direct = DirectEffectParams::default();
+        let mut outputs = source.get_outputs(SimulationFlags::all());
+        outputs.direct.flags = DirectEffectFlags::all();
+        //let direct = DirectEffectParams::default();
+        //dbg!(outputs.direct.distance_attenuation);
+        dbg!(outputs.direct.occlusion);
 
-        direct_effect.apply_to_buffer(&direct, binaural_frame, &mut direct_output_buffer)?;
+        direct_effect.apply_to_buffer(&outputs.direct, binaural_frame, &mut direct_output_buffer)?;
         steam_audio::extend_deinterleaved(&mut output, &direct_output_buffer.data);
     }
 
