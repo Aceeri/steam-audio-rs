@@ -78,7 +78,7 @@ pub enum TransmissionType {
 
 impl Default for TransmissionType {
     fn default() -> Self {
-        Self::FrequencyDependent
+        Self::FrequencyIndependent
     }
 }
 
@@ -89,7 +89,7 @@ impl Into<ffi::IPLTransmissionType> for TransmissionType {
                 ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQINDEPENDENT
             }
             Self::FrequencyDependent => {
-                ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQINDEPENDENT
+                ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQDEPENDENT
             }
         }
     }
@@ -156,6 +156,7 @@ impl Into<ffi::IPLDirectEffectParams> for &DirectEffectParams {
 
 impl From<ffi::IPLDirectEffectParams> for DirectEffectParams {
     fn from(other: ffi::IPLDirectEffectParams) -> Self {
+        dbg!(other);
         Self {
             flags: other.flags.into(),
             transmission_type: other.transmissionType.into(),

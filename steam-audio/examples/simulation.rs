@@ -14,7 +14,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let audio = steam_audio::read_ogg(FILENAME)?;
     let audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
 
-    let simulation_settings = SimulationSettings::from_audio_settings(&audio_settings);
+    let mut simulation_settings = SimulationSettings::from_audio_settings(&audio_settings);
+    simulation_settings.flags = SimulationFlags::all();
     let mut simulator = Simulator::new(&mut context, &simulation_settings)?;
 
     let scene_settings = SceneSettings::default();
@@ -35,39 +36,40 @@ fn main() -> Result<(), Box<dyn Error>> {
         material_indices: vec![0, 0],
     };
 
-    dbg!();
     let static_mesh = StaticMesh::new(&scene, mesh_settings)?;
     scene.add_static_mesh(&static_mesh);
-    dbg!();
-    scene.commit();
-    dbg!();
 
-    context.debug();
-    dbg!(unsafe { simulator.inner() });
-    dbg!(unsafe { scene.inner() });
+    scene.commit();
+
     simulator.set_scene(&scene);
-    dbg!();
     simulator.commit();
-    dbg!();
 
     let source_settings = &SourceSettings::default();
     let source = Source::new(&simulator, &source_settings)?;
 
     source.set_inputs(
-        SimulationFlags::DIRECT,
+        SimulationFlags::all(),
         &SimulationInputs {
+            flags: SimulationFlags::all(),
+            direct_flags: DirectSimulationFlags::all(),
+            //occlusion_type: OcclusionType::Raycast,
+            occlusion_radius: 0.0,
             source: Orientation {
-                origin: Vec3::X,
+                origin: Vec3::new(0.5, 0.5, 1.0),
                 ..Default::default()
             },
             ..Default::default()
         },
     );
-    dbg!();
+
     simulator.add_source(&source);
     simulator.set_shared_inputs(
-        SimulationFlags::DIRECT,
+        SimulationFlags::all(),
         &SimulationSharedInputs {
+            listener: Orientation {
+                origin: Vec3::new(0.5, 0.5, -1.0),
+                ..Default::default()
+            },
             ..Default::default()
         },
     );
@@ -77,7 +79,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     simulator.run_direct();
     dbg!();
 
-    let outputs = source.get_outputs(SimulationFlags::DIRECT);
+    let outputs = source.get_outputs(SimulationFlags::all());
     dbg!(outputs);
 
     Ok(())
