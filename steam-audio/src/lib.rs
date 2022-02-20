@@ -7,6 +7,7 @@ pub mod interleave;
 pub mod orientation;
 pub mod raw;
 pub mod simulation;
+pub mod device;
 
 pub use effect::ambisonics::ambisonic_order_channels;
 pub use interleave::{extend_deinterleaved, interleave};

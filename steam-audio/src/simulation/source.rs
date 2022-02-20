@@ -3,7 +3,7 @@ use steam_audio_sys::ffi;
 
 #[derive(Debug, Default)]
 pub struct SourceSettings {
-    flags: SimulationFlags,
+    pub flags: SimulationFlags,
 }
 
 impl Into<ffi::IPLSourceSettings> for &SourceSettings {
@@ -39,7 +39,7 @@ impl Source {
         let mut ipl_settings: ffi::IPLSourceSettings = settings.into();
 
         unsafe {
-            match ffi::iplSourceCreate(simulator.0, &mut ipl_settings, &mut source.0) {
+            match ffi::iplSourceCreate(simulator.inner, &mut ipl_settings, &mut source.0) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(source),
                 err => Err(SteamAudioError::IPLError(err)),
             }
@@ -273,7 +273,7 @@ impl Into<ffi::IPLSimulationInputs> for &SimulationInputs {
                     radius: 0.0,
                 },
             },
-            pathingProbes: std::ptr::null_mut(),
+            pathingProbes: unsafe { std::ptr::null_mut::<ffi::_IPLProbeBatch_t>().offset(1000) },
             visRadius: self.visible_radius,
             visThreshold: self.visible_threshold,
             visRange: self.visible_range,

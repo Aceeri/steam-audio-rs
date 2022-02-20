@@ -1,12 +1,12 @@
 use glam::Vec3;
-use steam_audio::{prelude::*, simulation::simulation::SimulationSharedInputs};
+use steam_audio::{prelude::*, simulation::simulation::SimulationSharedInputs, Orientation};
 
 use std::error::Error;
 
 const FILENAME: &'static str = "assets/eduardo.ogg";
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let context = Context::new(ContextSettings::default())?;
+    let mut context = Context::new(ContextSettings::default())?;
     let audio_settings = AudioSettings::default();
     let hrtf_settings = HRTFSettings::default();
     let hrtf = HRTF::new(&context, &audio_settings, &hrtf_settings)?;
@@ -15,10 +15,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
 
     let simulation_settings = SimulationSettings::from_audio_settings(&audio_settings);
-    let mut simulator = Simulator::new(&context, &simulation_settings)?;
+    let mut simulator = Simulator::new(&mut context, &simulation_settings)?;
 
     let scene_settings = SceneSettings::default();
-    let mut scene = Scene::new(&context, &scene_settings)?;
+    let mut scene = Scene::new(&mut context, &scene_settings)?;
 
     let mesh_settings = StaticMeshSettings {
         vertices: vec![
@@ -42,7 +42,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     scene.commit();
     dbg!();
 
-    dbg!();
+    context.debug();
+    dbg!(unsafe { simulator.inner() });
+    dbg!(unsafe { scene.inner() });
     simulator.set_scene(&scene);
     dbg!();
     simulator.commit();
@@ -54,6 +56,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     source.set_inputs(
         SimulationFlags::DIRECT,
         &SimulationInputs {
+            source: Orientation {
+                origin: Vec3::X,
+                ..Default::default()
+            },
             ..Default::default()
         },
     );

@@ -48,15 +48,34 @@ impl Into<ffi::IPLSceneSettings> for &SceneSettings {
     }
 }
 
-pub struct Scene(pub(crate) ffi::IPLScene);
+/*
+pub struct StoredSceneSettings {
+    pub type_: IPLSceneType,
+    pub closestHitCallback: IPLClosestHitCallback,
+    pub anyHitCallback: IPLAnyHitCallback,
+    pub batchedClosestHitCallback: IPLBatchedClosestHitCallback,
+    pub batchedAnyHitCallback: IPLBatchedAnyHitCallback,
+    pub userData: *mut ::std::os::raw::c_void,
+    pub embreeDevice: IPLEmbreeDevice,
+    pub radeonRaysDevice: IPLRadeonRaysDevice,
+}
+*/
+
+pub struct Scene {
+    pub(crate) inner: ffi::IPLScene,
+    settings: ffi::IPLSceneSettings,
+}
 
 impl Scene {
-    pub fn new(context: &Context, settings: &SceneSettings) -> Result<Self, SteamAudioError> {
-        let mut scene = Self(unsafe { std::mem::zeroed() });
+    pub fn new(context: &mut Context, settings: &SceneSettings) -> Result<Self, SteamAudioError> {
         let mut ipl_settings: ffi::IPLSceneSettings = settings.into();
+        let mut scene = Self {
+            inner: unsafe { std::mem::zeroed() },
+            settings: ipl_settings,
+        };
 
         unsafe {
-            match ffi::iplSceneCreate(context.0, &mut ipl_settings, &mut scene.0) {
+            match ffi::iplSceneCreate(context.inner, &mut scene.settings, &mut scene.inner) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(scene),
                 err => Err(SteamAudioError::IPLError(err)),
             }
@@ -64,18 +83,18 @@ impl Scene {
     }
 
     pub unsafe fn inner(&self) -> ffi::IPLScene {
-        self.0
+        self.inner
     }
 
     pub fn commit(&mut self) {
         unsafe {
-            ffi::iplSceneCommit(self.0);
+            ffi::iplSceneCommit(self.inner);
         }
     }
 
     pub fn add_static_mesh(&self, static_mesh: &StaticMesh) {
         unsafe {
-            ffi::iplStaticMeshAdd(static_mesh.inner, self.0);
+            ffi::iplStaticMeshAdd(static_mesh.inner, self.inner);
         }
     }
 }
@@ -83,7 +102,7 @@ impl Scene {
 impl Drop for Scene {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplSceneRelease(&mut self.0);
+            ffi::iplSceneRelease(&mut self.inner);
         }
     }
 }

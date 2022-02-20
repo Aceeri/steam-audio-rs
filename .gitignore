@@ -9,3 +9,6 @@ lib/
 
 *.raw
 *.ogg
+
+*.gpr
+*.rep

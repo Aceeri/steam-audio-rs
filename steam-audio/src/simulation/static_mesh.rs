@@ -67,7 +67,7 @@ impl StaticMesh {
         let mut ipl_settings: ffi::IPLStaticMeshSettings = (&mut mesh.settings).into();
 
         unsafe {
-            match ffi::iplStaticMeshCreate(scene.0, &mut ipl_settings, &mut mesh.inner) {
+            match ffi::iplStaticMeshCreate(scene.inner, &mut ipl_settings, &mut mesh.inner) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(mesh),
                 err => Err(SteamAudioError::IPLError(err)),
             }
