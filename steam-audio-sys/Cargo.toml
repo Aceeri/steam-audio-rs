@@ -12,8 +12,8 @@ license-file = "LICENSE.md"
 build = "build.rs"
 
 [dependencies]
-glam = "*"
-lewton = "*"
+glam = "0.20.2"
+lewton = "0.10.2"
 
 [build-dependencies]
 bindgen = "0.59.2"
