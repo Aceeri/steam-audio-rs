@@ -180,7 +180,10 @@ impl Into<ffi::IPLDirectivity> for Directivity {
 #[derive(Debug, Copy, Clone)]
 pub enum OcclusionType {
     Raycast,
-    Volumetric,
+    Volumetric {
+        occlusion_radius: f32,
+        num_occlusion_samples: u32,
+    },
 }
 
 impl Default for OcclusionType {
@@ -193,7 +196,7 @@ impl Into<ffi::IPLOcclusionType> for OcclusionType {
     fn into(self) -> ffi::IPLOcclusionType {
         match self {
             Self::Raycast => ffi::IPLOcclusionType::IPL_OCCLUSIONTYPE_RAYCAST,
-            Self::Volumetric => ffi::IPLOcclusionType::IPL_OCCLUSIONTYPE_VOLUMETRIC,
+            Self::Volumetric { .. } => ffi::IPLOcclusionType::IPL_OCCLUSIONTYPE_VOLUMETRIC,
         }
     }
 }
@@ -207,8 +210,6 @@ pub struct SimulationInputs {
     pub air_absorption_model: AirAbsorptionModel,
     pub directivity: Directivity,
     pub occlusion_type: OcclusionType,
-    pub occlusion_radius: f32,
-    pub num_occlusion_samples: u32,
     pub reverb_scale: [f32; 3],
     pub hybrid_reverb_transition_time: f32,
     pub hybrid_reverb_overlap_percent: f32,
@@ -233,8 +234,6 @@ impl Default for SimulationInputs {
             air_absorption_model: AirAbsorptionModel::default(),
             directivity: Directivity::default(),
             occlusion_type: OcclusionType::default(),
-            occlusion_radius: 0.0,
-            num_occlusion_samples: 0,
             reverb_scale: [0.0, 0.0, 0.0],
             hybrid_reverb_transition_time: 0.0,
             hybrid_reverb_overlap_percent: 0.0,
@@ -251,6 +250,18 @@ impl Default for SimulationInputs {
 
 impl Into<ffi::IPLSimulationInputs> for &SimulationInputs {
     fn into(self) -> ffi::IPLSimulationInputs {
+        let mut ffi_occlusion_radius = 0.0;
+        let mut ffi_num_occlusion_samples = 0;
+        match self.occlusion_type {
+            OcclusionType::Volumetric {
+                occlusion_radius, num_occlusion_samples
+            } => {
+                ffi_occlusion_radius = occlusion_radius;
+                ffi_num_occlusion_samples = num_occlusion_samples;
+            },
+            _ => {}
+        }
+
         ffi::IPLSimulationInputs {
             flags: self.flags.into(),
             directFlags: self.direct_flags.into(),
@@ -259,8 +270,8 @@ impl Into<ffi::IPLSimulationInputs> for &SimulationInputs {
             airAbsorptionModel: self.air_absorption_model.clone().into(),
             directivity: self.directivity.clone().into(),
             occlusionType: self.occlusion_type.into(),
-            occlusionRadius: self.occlusion_radius.into(),
-            numOcclusionSamples: self.num_occlusion_samples as i32,
+            occlusionRadius: ffi_occlusion_radius,
+            numOcclusionSamples: ffi_num_occlusion_samples as i32,
             reverbScale: self.reverb_scale,
             hybridReverbTransitionTime: self.hybrid_reverb_transition_time,
             hybridReverbOverlapPercent: self.hybrid_reverb_overlap_percent,
@@ -273,7 +284,7 @@ impl Into<ffi::IPLSimulationInputs> for &SimulationInputs {
                     radius: 0.0,
                 },
             },
-            pathingProbes: unsafe { std::ptr::null_mut::<ffi::_IPLProbeBatch_t>().offset(1000) },
+            pathingProbes: std::ptr::null_mut(),
             visRadius: self.visible_radius,
             visThreshold: self.visible_threshold,
             visRange: self.visible_range,
