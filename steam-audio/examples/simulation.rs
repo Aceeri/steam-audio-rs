@@ -119,7 +119,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 flags: SimulationFlags::all(),
                 direct_flags: DirectSimulationFlags::all(),
                 occlusion_type: OcclusionType::Raycast,
-                occlusion_radius: 0.0,
                 source: Orientation {
                     origin: position.into(),
                     ..Default::default()
