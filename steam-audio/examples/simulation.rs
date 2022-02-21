@@ -3,7 +3,7 @@ use steam_audio::{prelude::*, simulation::{simulation::SimulationSharedInputs, s
 
 use std::{error::Error, path::Path};
 
-const FILENAME: &'static str = "assets/eduardo.ogg";
+const FILENAME: &'static str = "assets/Secret Lie.ogg";
 
 fn file_stem<P: AsRef<Path>>(p: P) -> String {
     p.as_ref()

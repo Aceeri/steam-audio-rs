@@ -1,3 +1,6 @@
 [workspace]
 members = ["steam-audio", "steam-audio-sys"]
 resolver = "2"
+
+[patch.crates-io]
+#steam-audio-sys = { path = "../steam-audiosys" }

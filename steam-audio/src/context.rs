@@ -1,6 +1,6 @@
 use std::ffi::{CStr, c_void};
 
-use steam_audio_sys::ffi::{self, iplContextRetain};
+use steam_audio_sys::ffi;
 
 use crate::prelude::*;
 
@@ -35,7 +35,7 @@ unsafe extern "C" fn free_callback(size: ffi::IPLsize, alignment: ffi::IPLsize) 
     std::alloc::alloc(layout) as *mut c_void
 }
 
-impl Into<ffi::IPLContextSettings> for ContextSettings {
+impl Into<ffi::IPLContextSettings> for &ContextSettings {
     fn into(self) -> ffi::IPLContextSettings {
         ffi::IPLContextSettings {
             version: self.version.unwrap_or(ffi::STEAMAUDIO_VERSION),
@@ -54,8 +54,13 @@ pub struct Context {
     settings: ffi::IPLContextSettings,
 }
 
+// This is supposedly safe as IPLContext is allowed to be used from multiple threads
+// according to the documentation of steam audio.
+unsafe impl Send for Context { }
+unsafe impl Sync for Context { }
+
 impl Context {
-    pub fn new(settings: ContextSettings) -> Result<Self, SteamAudioError> {
+    pub fn new(settings: &ContextSettings) -> Result<Self, SteamAudioError> {
         let mut ipl_settings: ffi::IPLContextSettings = settings.into();
         let mut context = Self {
             inner: unsafe { std::mem::zeroed() },
@@ -76,7 +81,7 @@ impl Context {
 
     pub fn retain(&self) -> Context {
         unsafe {
-            let new_context = iplContextRetain(self.inner);
+            let new_context = ffi::iplContextRetain(self.inner);
             Context {
                 inner: new_context,
                 settings: self.settings,

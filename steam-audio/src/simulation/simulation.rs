@@ -160,6 +160,9 @@ pub struct Simulator {
     settings: ffi::IPLSimulationSettings,
 }
 
+unsafe impl Send for Simulator { }
+unsafe impl Sync for Simulator { }
+
 impl Simulator {
     pub fn new(context: &mut Context, settings: &SimulationSettings) -> Result<Self, SteamAudioError> {
         let mut ipl_settings: ffi::IPLSimulationSettings = settings.into();

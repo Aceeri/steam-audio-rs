@@ -85,6 +85,9 @@ pub struct HRTF {
     audio_settings: ffi::IPLAudioSettings,
 }
 
+unsafe impl Send for HRTF { }
+unsafe impl Sync for HRTF { }
+
 impl HRTF {
     pub fn new(
         context: &Context,

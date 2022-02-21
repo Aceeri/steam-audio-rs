@@ -33,6 +33,10 @@ impl From<ffi::IPLSimulationOutputs> for SimulationOutputs {
 
 pub struct Source(pub(crate) ffi::IPLSource);
 
+
+unsafe impl Send for Source { }
+unsafe impl Sync for Source { }
+
 impl Source {
     pub fn new(simulator: &Simulator, settings: &SourceSettings) -> Result<Self, SteamAudioError> {
         let mut source = Self(unsafe { std::mem::zeroed() });
