@@ -80,13 +80,13 @@ impl AudioSettings {
 }
 
 pub struct HRTF {
-    pub(crate) inner: ffi::IPLHRTF,
+    inner: ffi::IPLHRTF,
     hrtf_settings: ffi::IPLHRTFSettings,
     audio_settings: ffi::IPLAudioSettings,
 }
 
-unsafe impl Send for HRTF { }
-unsafe impl Sync for HRTF { }
+unsafe impl Send for HRTF {}
+unsafe impl Sync for HRTF {}
 
 impl HRTF {
     pub fn new(
@@ -94,17 +94,17 @@ impl HRTF {
         audio_settings: &AudioSettings,
         hrtf_settings: &HRTFSettings,
     ) -> Result<Self, SteamAudioError> {
-        let mut hrtf_ipl_settings: ffi::IPLHRTFSettings = hrtf_settings.into();
-        let mut audio_ipl_settings: ffi::IPLAudioSettings = audio_settings.into();
+        let hrtf_ipl_settings: ffi::IPLHRTFSettings = hrtf_settings.into();
+        let audio_ipl_settings: ffi::IPLAudioSettings = audio_settings.into();
         let mut hrtf = Self {
-            inner: unsafe { std::mem::zeroed() },
+            inner: std::ptr::null_mut(),
             hrtf_settings: hrtf_ipl_settings,
             audio_settings: audio_ipl_settings,
         };
 
         unsafe {
             match ffi::iplHRTFCreate(
-                context.inner,
+                context.inner_raw(),
                 &mut hrtf.audio_settings,
                 &mut hrtf.hrtf_settings,
                 &mut hrtf.inner,
@@ -114,16 +114,23 @@ impl HRTF {
             }
         }
     }
+}
 
-    pub unsafe fn inner(&self) -> ffi::IPLHRTF {
+impl crate::SteamAudioObject for HRTF {
+    type Object = ffi::IPLHRTF;
+    fn inner_raw(&self) -> Self::Object {
+        assert!(!self.inner.is_null());
         self.inner
+    }
+    fn inner_mut(&mut self) -> &mut Self::Object {
+        &mut self.inner
     }
 }
 
 impl Drop for HRTF {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplHRTFRelease(&mut self.inner);
+            ffi::iplHRTFRelease(self.inner_mut());
         }
     }
 }

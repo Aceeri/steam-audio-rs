@@ -42,16 +42,16 @@ impl BinauralEffect {
     ) -> Result<Self, SteamAudioError> {
         let mut effect = Self {
             inner: unsafe { std::mem::zeroed() },
-            hrtf: unsafe { hrtf.inner() },
+            hrtf: unsafe { hrtf.inner_raw() },
         };
 
         let mut effect_settings = ffi::IPLBinauralEffectSettings {
-            hrtf: unsafe { hrtf.inner() },
+            hrtf: unsafe { hrtf.inner_raw() },
         };
 
         unsafe {
             match ffi::iplBinauralEffectCreate(
-                context.inner,
+                context.inner_raw(),
                 &mut audio_settings.into(),
                 &mut effect_settings,
                 &mut effect.inner,
@@ -69,7 +69,7 @@ impl BinauralEffect {
     pub fn apply_to_buffer(
         &self,
         params: &BinauralParams,
-        mut frame: AudioBufferFrame,
+        mut frame: FFIAudioBufferFrame,
         output_buffer: &mut AudioBuffer,
     ) -> Result<(), SteamAudioError> {
         assert_eq!(frame.channels(), 1);
@@ -97,7 +97,7 @@ impl BinauralEffect {
         &self,
         audio_settings: &AudioSettings,
         params: &BinauralParams,
-        frame: AudioBufferFrame,
+        frame: FFIAudioBufferFrame,
     ) -> Result<AudioBuffer, SteamAudioError> {
         let mut output_buffer = AudioBuffer::frame_buffer_with_channels(audio_settings, 2);
         self.apply_to_buffer(params, frame, &mut output_buffer)?;

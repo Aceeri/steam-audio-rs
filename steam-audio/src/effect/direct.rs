@@ -177,7 +177,7 @@ impl DirectEffect {
 
         unsafe {
             match ffi::iplDirectEffectCreate(
-                context.inner,
+                context.inner_raw(),
                 &mut audio_settings.into(),
                 &mut effect_settings,
                 &mut effect.inner,
@@ -195,7 +195,7 @@ impl DirectEffect {
     pub fn apply_to_buffer(
         &self,
         params: &DirectEffectParams,
-        mut frame: AudioBufferFrame,
+        mut frame: FFIAudioBufferFrame,
         output_buffer: &mut AudioBuffer,
     ) -> Result<(), SteamAudioError> {
         assert_eq!(frame.channels(), self.channels);
@@ -223,9 +223,10 @@ impl DirectEffect {
         &self,
         audio_settings: &AudioSettings,
         params: &DirectEffectParams,
-        frame: AudioBufferFrame,
+        frame: FFIAudioBufferFrame,
     ) -> Result<AudioBuffer, SteamAudioError> {
-        let mut output_buffer = AudioBuffer::frame_buffer_with_channels(audio_settings, self.channels);
+        let mut output_buffer =
+            AudioBuffer::frame_buffer_with_channels(audio_settings, self.channels);
         self.apply_to_buffer(params, frame, &mut output_buffer)?;
         Ok(output_buffer)
     }

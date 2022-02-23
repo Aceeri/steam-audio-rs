@@ -1,4 +1,4 @@
-use std::ffi::{CStr, c_void};
+use std::ffi::{c_void, CStr};
 
 use steam_audio_sys::ffi;
 
@@ -26,21 +26,22 @@ unsafe extern "C" fn alloc_callback(size: ffi::IPLsize, alignment: ffi::IPLsize)
     std::alloc::alloc(layout) as *mut c_void
 }
 
+/*
 unsafe extern "C" fn free_callback(size: ffi::IPLsize, alignment: ffi::IPLsize) -> *mut c_void {
     let layout = match std::alloc::Layout::from_size_align(size as usize, alignment as usize) {
         Ok(layout) => layout,
         _ => return std::ptr::null_mut(),
     };
 
-    std::alloc::alloc(layout) as *mut c_void
+    std::alloc::dealloc(layout) as *mut c_void
 }
+*/
 
 impl Into<ffi::IPLContextSettings> for &ContextSettings {
     fn into(self) -> ffi::IPLContextSettings {
         ffi::IPLContextSettings {
             version: self.version.unwrap_or(ffi::STEAMAUDIO_VERSION),
             logCallback: Some(log_callback),
-            //logCallback: None,
             allocateCallback: Some(alloc_callback),
             simdLevel: self
                 .simd_level
@@ -50,55 +51,64 @@ impl Into<ffi::IPLContextSettings> for &ContextSettings {
     }
 }
 pub struct Context {
-    pub(crate) inner: ffi::IPLContext,
+    inner: ffi::IPLContext,
+
+    // I'm not sure if this is necessary as I don't think the settings
+    // are used after creation, but better to be safe here and to ensure
+    // it is still alive while the context is alive.
     settings: ffi::IPLContextSettings,
 }
 
 // This is supposedly safe as IPLContext is allowed to be used from multiple threads
 // according to the documentation of steam audio.
-unsafe impl Send for Context { }
-unsafe impl Sync for Context { }
+unsafe impl Send for Context {}
+unsafe impl Sync for Context {}
+
+impl crate::SteamAudioObject for Context {
+    type Object = ffi::IPLContext;
+    fn inner_raw(&self) -> Self::Object {
+        assert!(!self.inner.is_null());
+        self.inner
+    }
+    fn inner_mut(&mut self) -> &mut Self::Object {
+        &mut self.inner
+    }
+}
 
 impl Context {
     pub fn new(settings: &ContextSettings) -> Result<Self, SteamAudioError> {
-        let mut ipl_settings: ffi::IPLContextSettings = settings.into();
+        let ipl_settings: ffi::IPLContextSettings = settings.into();
         let mut context = Self {
-            inner: unsafe { std::mem::zeroed() },
+            inner: std::ptr::null_mut(),
             settings: ipl_settings,
         };
 
         unsafe {
-            match ffi::iplContextCreate(&mut context.settings, &mut context.inner) {
-                ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(context),
-                err => Err(SteamAudioError::IPLError(err)),
-            }
+            match ffi::iplContextCreate(&mut context.settings, context.inner_mut()) {
+                ffi::IPLerror::IPL_STATUS_SUCCESS => {},
+                err => return Err(SteamAudioError::IPLError(err)),
+            };
+            
+            Ok(context)
         }
-    }
 
-    pub unsafe fn inner(&self) -> ffi::IPLContext {
-        self.inner
     }
 
     pub fn retain(&self) -> Context {
         unsafe {
-            let new_context = ffi::iplContextRetain(self.inner);
+            let new_context = ffi::iplContextRetain(self.inner_raw());
             Context {
                 inner: new_context,
                 settings: self.settings,
             }
         }
     }
-
-    pub fn debug(&mut self) {
-        dbg!(self.inner);
-        dbg!(self.settings);
-    }
 }
 
 impl Drop for Context {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplContextRelease(&mut self.inner);
+            ffi::iplContextRelease(self.inner_mut());
         }
     }
 }

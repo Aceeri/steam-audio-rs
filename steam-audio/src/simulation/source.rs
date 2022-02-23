@@ -31,33 +31,44 @@ impl From<ffi::IPLSimulationOutputs> for SimulationOutputs {
     }
 }
 
-pub struct Source(pub(crate) ffi::IPLSource);
+pub struct Source {
+    inner: ffi::IPLSource,
+}
 
+unsafe impl Send for Source {}
+unsafe impl Sync for Source {}
 
-unsafe impl Send for Source { }
-unsafe impl Sync for Source { }
+impl crate::SteamAudioObject for Source {
+    type Object = ffi::IPLSource;
+    fn inner_raw(&self) -> Self::Object {
+        assert!(!self.inner.is_null());
+        self.inner
+    }
+    fn inner_mut(&mut self) -> &mut Self::Object {
+        &mut self.inner
+    }
+}
 
 impl Source {
     pub fn new(simulator: &Simulator, settings: &SourceSettings) -> Result<Self, SteamAudioError> {
-        let mut source = Self(unsafe { std::mem::zeroed() });
+        let mut source = Self {
+            inner: std::ptr::null_mut(),
+        };
+
         let mut ipl_settings: ffi::IPLSourceSettings = settings.into();
 
         unsafe {
-            match ffi::iplSourceCreate(simulator.inner, &mut ipl_settings, &mut source.0) {
+            match ffi::iplSourceCreate(simulator.inner_raw(), &mut ipl_settings, source.inner_mut()) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(source),
                 err => Err(SteamAudioError::IPLError(err)),
             }
         }
     }
 
-    pub unsafe fn inner(&self) -> ffi::IPLSource {
-        self.0
-    }
-
     pub fn get_outputs(&self, flags: SimulationFlags) -> SimulationOutputs {
         unsafe {
             let mut outputs: ffi::IPLSimulationOutputs = std::mem::zeroed();
-            ffi::iplSourceGetOutputs(self.0, flags.into(), &mut outputs);
+            ffi::iplSourceGetOutputs(self.inner_raw(), flags.into(), &mut outputs);
             outputs.into()
         }
     }
@@ -65,7 +76,7 @@ impl Source {
     pub fn set_inputs(&self, flags: SimulationFlags, inputs: &SimulationInputs) {
         unsafe {
             let mut inputs: ffi::IPLSimulationInputs = inputs.into();
-            ffi::iplSourceSetInputs(self.0, flags.into(), &mut inputs);
+            ffi::iplSourceSetInputs(self.inner_raw(), flags.into(), &mut inputs);
         }
     }
 }
@@ -73,7 +84,7 @@ impl Source {
 impl Drop for Source {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplSourceRelease(&mut self.0);
+            ffi::iplSourceRelease(self.inner_mut());
         }
     }
 }
@@ -258,11 +269,12 @@ impl Into<ffi::IPLSimulationInputs> for &SimulationInputs {
         let mut ffi_num_occlusion_samples = 0;
         match self.occlusion_type {
             OcclusionType::Volumetric {
-                occlusion_radius, num_occlusion_samples
+                occlusion_radius,
+                num_occlusion_samples,
             } => {
                 ffi_occlusion_radius = occlusion_radius;
                 ffi_num_occlusion_samples = num_occlusion_samples;
-            },
+            }
             _ => {}
         }
 

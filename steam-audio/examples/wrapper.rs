@@ -1,7 +1,7 @@
 extern crate lewton;
 
 use glam::Vec3;
-use steam_audio::effect::ambisonics::decode::AmbisonicsDecodeSettings;
+//use steam_audio::effect::ambisonics::decode::AmbisonicsDecodeSettings;
 use steam_audio::prelude::*;
 
 use std::error::Error;
@@ -38,6 +38,7 @@ fn binaural_effect(
     Ok(())
 }
 
+/*
 fn ambisonics_effect(
     context: &Context,
     audio_settings: &AudioSettings,
@@ -99,6 +100,7 @@ fn ambisonics_decode_effect(
 
     Ok(AudioBuffer::from_raw_pcm(audio_settings, output))
 }
+*/
 
 fn file_stem<P: AsRef<Path>>(p: P) -> String {
     p.as_ref()
@@ -120,7 +122,7 @@ fn raw_to_file(
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let context = Context::new(ContextSettings::default())?;
+    let context = Context::new(&ContextSettings::default())?;
     let audio_settings = AudioSettings::default();
     let hrtf_settings = HRTFSettings::default();
     let hrtf = HRTF::new(&context, &audio_settings, &hrtf_settings)?;
@@ -128,7 +130,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let audio = steam_audio::read_ogg(FILENAME)?;
     let audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
     binaural_effect(&context, &audio_settings, &hrtf, audio_buffer.clone())?;
-    ambisonics_effect(&context, &audio_settings, &hrtf, audio_buffer.clone())?;
+    //ambisonics_effect(&context, &audio_settings, &hrtf, audio_buffer.clone())?;
 
     Ok(())
 }

@@ -10,6 +10,7 @@ keywords = ["steam", "audio", "vr", "binaural", "gamedev"]
 categories = ["multimedia::audio", "games", "simulation"]
 license-file = "LICENSE.md"
 build = "build.rs"
+links = "phonon"
 
 [dependencies]
 glam = "0.20.2"

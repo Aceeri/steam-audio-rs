@@ -1547,7 +1547,7 @@ IPLAPI void IPLCALL iplBinauralEffectReset(IPLBinauralEffect effect);
     \return \c IPL_AUDIOEFFECTSTATE_TAILREMAINING if any tail samples remain in the effect's internal buffers, or
             \c IPL_AUDIOEFFECTSTATE_TAILCOMPLETE otherwise.
 */
-IPLAPI IPLAudioEffectState IPLCALL iplBinauralEffectApply(IPLBinauralEffect effect, IPLBinauralEffectParams* params, IPLAudioBuffer* in, IPLAudioBuffer* out);
+IPLAPI IPLAudioEffectState IPLCALL iplBinauralEffectApply(IPLBinauralEffect effect, IPLBinauralEffectParams* params, const IPLAudioBuffer* in, IPLAudioBuffer* out);
 
 /** \} */
 

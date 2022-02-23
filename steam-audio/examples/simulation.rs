@@ -1,5 +1,9 @@
 use glam::Vec3;
-use steam_audio::{prelude::*, simulation::{simulation::SimulationSharedInputs, source::OcclusionType}, Orientation};
+use steam_audio::{
+    prelude::*,
+    simulation::{simulation::SimulationSharedInputs, source::OcclusionType},
+    Orientation,
+};
 
 use std::{error::Error, path::Path};
 
@@ -25,7 +29,7 @@ fn raw_to_file(
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut context = Context::new(ContextSettings::default())?;
+    let mut context = Context::new(&ContextSettings::default())?;
     let audio_settings = AudioSettings::default();
     let hrtf_settings = HRTFSettings::default();
     let hrtf = HRTF::new(&context, &audio_settings, &hrtf_settings)?;
@@ -47,10 +51,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             Vec3::new(5.0, -5.0, 0.25),
             Vec3::new(5.0, 5.0, 0.25),
         ],
-        triangles: vec![
-            [0, 1, 2],
-            [0, 2, 3],
-        ],
+        triangles: vec![[0, 1, 2], [0, 2, 3]],
         materials: vec![steam_audio::materials::GENERIC],
         material_indices: vec![0, 0],
     };
@@ -78,7 +79,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             ..Default::default()
         },
     );
-
 
     simulator.add_source(&source);
     dbg!();
@@ -134,7 +134,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         //dbg!(outputs.direct.distance_attenuation);
         dbg!(outputs.direct.occlusion);
 
-        direct_effect.apply_to_buffer(&outputs.direct, binaural_frame, &mut direct_output_buffer)?;
+        direct_effect.apply_to_buffer(
+            &outputs.direct,
+            binaural_frame,
+            &mut direct_output_buffer,
+        )?;
         steam_audio::extend_deinterleaved(&mut output, &direct_output_buffer.data);
     }
 

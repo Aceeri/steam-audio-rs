@@ -1,7 +1,6 @@
-
+use steam_audio::prelude::*;
 use steam_audio::simulation::simulation::{ReflectionEffectType, SceneType};
 use steam_audio_sys::ffi::*;
-use steam_audio::prelude::*;
 
 fn main() {
     let simulation_settings = SimulationSettings {

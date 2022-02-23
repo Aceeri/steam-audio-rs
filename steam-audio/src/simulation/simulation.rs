@@ -156,60 +156,75 @@ impl Into<ffi::IPLSimulationSettings> for &SimulationSettings {
 }
 
 pub struct Simulator {
-    pub(crate) inner: ffi::IPLSimulator,
+    inner: ffi::IPLSimulator,
     settings: ffi::IPLSimulationSettings,
 }
 
-unsafe impl Send for Simulator { }
-unsafe impl Sync for Simulator { }
+unsafe impl Send for Simulator {}
+unsafe impl Sync for Simulator {}
+
+impl crate::SteamAudioObject for Simulator {
+    type Object = ffi::IPLSimulator;
+    fn inner_raw(&self) -> Self::Object {
+        assert!(!self.inner.is_null());
+        self.inner
+    }
+    fn inner_mut(&mut self) -> &mut Self::Object {
+        &mut self.inner
+    }
+}
+
 
 impl Simulator {
-    pub fn new(context: &mut Context, settings: &SimulationSettings) -> Result<Self, SteamAudioError> {
-        let mut ipl_settings: ffi::IPLSimulationSettings = settings.into();
+    pub fn new(
+        context: &Context,
+        settings: &SimulationSettings,
+    ) -> Result<Self, SteamAudioError> {
+        let ipl_settings: ffi::IPLSimulationSettings = settings.into();
         let mut simulator = Self {
-            inner: unsafe { std::mem::zeroed() },
+            inner: std::ptr::null_mut(),
             settings: ipl_settings,
         };
 
         unsafe {
-            match ffi::iplSimulatorCreate(context.inner, &mut simulator.settings, &mut simulator.inner) {
+            match ffi::iplSimulatorCreate(
+                context.inner_raw(),
+                &mut simulator.settings,
+                simulator.inner_mut(),
+            ) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(simulator),
                 err => Err(SteamAudioError::IPLError(err)),
             }
         }
     }
 
-    pub unsafe fn inner(&self) -> ffi::IPLSimulator {
-        self.inner
-    }
-
     pub fn commit(&mut self) {
         unsafe {
-            ffi::iplSimulatorCommit(self.inner);
+            ffi::iplSimulatorCommit(self.inner_raw());
         }
     }
 
     pub fn add_source(&self, source: &Source) {
         unsafe {
-            ffi::iplSourceAdd(source.0, self.inner);
+            ffi::iplSourceAdd(source.inner_raw(), self.inner_raw());
         }
     }
 
     pub fn run_direct(&mut self) {
         unsafe {
-            ffi::iplSimulatorRunDirect(self.inner);
+            ffi::iplSimulatorRunDirect(self.inner_raw());
         }
     }
 
     pub fn run_reflections(&mut self) {
         unsafe {
-            ffi::iplSimulatorRunReflections(self.inner);
+            ffi::iplSimulatorRunReflections(self.inner_raw());
         }
     }
 
     pub fn run_pathing(&mut self) {
         unsafe {
-            ffi::iplSimulatorRunPathing(self.inner);
+            ffi::iplSimulatorRunPathing(self.inner_raw());
         }
     }
 
@@ -222,13 +237,13 @@ impl Simulator {
         let mut shared_inputs: ffi::IPLSimulationSharedInputs = shared_inputs.into();
 
         unsafe {
-            ffi::iplSimulatorSetSharedInputs(self.inner, flags.into(), &mut shared_inputs);
+            ffi::iplSimulatorSetSharedInputs(self.inner_raw(), flags.into(), &mut shared_inputs);
         }
     }
 
     pub fn set_scene(&self, scene: &Scene) {
         unsafe {
-            ffi::iplSimulatorSetScene(self.inner, scene.inner);
+            ffi::iplSimulatorSetScene(self.inner_raw(), scene.inner_raw());
         }
     }
 }
@@ -236,7 +251,7 @@ impl Simulator {
 impl Drop for Simulator {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplSimulatorRelease(&mut self.inner);
+            ffi::iplSimulatorRelease(self.inner_mut());
         }
     }
 }

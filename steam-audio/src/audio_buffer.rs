@@ -6,6 +6,7 @@ use crate::prelude::AudioSettings;
 pub struct AudioBuffer {
     pub data: Vec<Vec<f32>>,
     frame_size: usize,
+    sample_rate: u32,
 }
 
 impl AudioBuffer {
@@ -13,6 +14,7 @@ impl AudioBuffer {
         AudioBuffer {
             data: Vec::new(),
             frame_size: settings.frame_size() as usize,
+            sample_rate: settings.sampling_rate() as u32,
         }
     }
 
@@ -21,6 +23,7 @@ impl AudioBuffer {
         AudioBuffer {
             data: vec![vec![0.0; frame_size]; channels],
             frame_size: frame_size,
+            sample_rate: settings.sampling_rate() as u32,
         }
     }
 
@@ -28,6 +31,7 @@ impl AudioBuffer {
         AudioBuffer {
             data: data,
             frame_size: settings.frame_size() as usize,
+            sample_rate: settings.sampling_rate() as u32,
         }
     }
 
@@ -59,24 +63,24 @@ impl AudioBuffer {
         self.total_samples() as f64 / audio_settings.sampling_rate() as f64
     }
 
-    pub fn current_frame<'a>(&'a self) -> (Vec<*mut f32>, AudioBufferFrame<'a>) {
+    pub fn current_frame<'a>(&'a self) -> (Vec<*mut f32>, FFIAudioBufferFrame<'a>) {
         let mut ipl_buffer = unsafe { self.ffi_buffer_null() };
         let mut ptrs = unsafe { self.data_ptrs() };
         ipl_buffer.data = ptrs.as_mut_ptr();
 
-        (ptrs, AudioBufferFrame(ipl_buffer, PhantomData))
+        (ptrs, FFIAudioBufferFrame(ipl_buffer, PhantomData))
     }
 }
 
 impl<'a> IntoIterator for &'a AudioBuffer {
-    type Item = AudioBufferFrame<'a>;
-    type IntoIter = AudioBufferIterator<'a>;
+    type Item = FFIAudioBufferFrame<'a>;
+    type IntoIter = FFIAudioBufferIterator<'a>;
     fn into_iter(self) -> Self::IntoIter {
         Self::IntoIter::new(self)
     }
 }
 
-pub struct AudioBufferIterator<'a> {
+pub struct FFIAudioBufferIterator<'a> {
     buffer: &'a AudioBuffer,
     ptrs: Vec<*mut f32>,
     current: Option<usize>,
@@ -84,7 +88,7 @@ pub struct AudioBufferIterator<'a> {
     pub(crate) inner: ffi::IPLAudioBuffer,
 }
 
-impl<'a> AudioBufferIterator<'a> {
+impl<'a> FFIAudioBufferIterator<'a> {
     pub fn new(buffer: &'a AudioBuffer) -> Self {
         let mut ipl_buffer = unsafe { buffer.ffi_buffer_null() };
         let mut ptrs = unsafe { buffer.data_ptrs() };
@@ -103,9 +107,9 @@ impl<'a> AudioBufferIterator<'a> {
 use std::marker::PhantomData;
 
 #[derive(Debug)]
-pub struct AudioBufferFrame<'a>(pub ffi::IPLAudioBuffer, PhantomData<&'a ()>);
+pub struct FFIAudioBufferFrame<'a>(pub ffi::IPLAudioBuffer, PhantomData<&'a ()>);
 
-impl<'a> AudioBufferFrame<'a> {
+impl<'a> FFIAudioBufferFrame<'a> {
     pub fn samples(&self) -> usize {
         self.0.numSamples as usize
     }
@@ -115,10 +119,10 @@ impl<'a> AudioBufferFrame<'a> {
     }
 }
 
-impl<'a> Iterator for AudioBufferIterator<'a> {
-    type Item = AudioBufferFrame<'a>;
+impl<'a> Iterator for FFIAudioBufferIterator<'a> {
+    type Item = FFIAudioBufferFrame<'a>;
     fn next(&mut self) -> Option<Self::Item> {
-        let frame = AudioBufferFrame(self.inner, PhantomData);
+        let frame = FFIAudioBufferFrame(self.inner, PhantomData);
 
         if let Some(index) = self.current {
             if index < self.frames - 1 {

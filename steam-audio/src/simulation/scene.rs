@@ -62,39 +62,49 @@ pub struct StoredSceneSettings {
 */
 
 pub struct Scene {
-    pub(crate) inner: ffi::IPLScene,
+    inner: ffi::IPLScene,
     settings: ffi::IPLSceneSettings,
+}
+
+unsafe impl Send for Scene {}
+unsafe impl Sync for Scene {}
+
+impl crate::SteamAudioObject for Scene {
+    type Object = ffi::IPLScene;
+    fn inner_raw(&self) -> Self::Object {
+        assert!(!self.inner.is_null());
+        self.inner
+    }
+    fn inner_mut(&mut self) -> &mut Self::Object {
+        &mut self.inner
+    }
 }
 
 impl Scene {
     pub fn new(context: &mut Context, settings: &SceneSettings) -> Result<Self, SteamAudioError> {
         let mut ipl_settings: ffi::IPLSceneSettings = settings.into();
         let mut scene = Self {
-            inner: unsafe { std::mem::zeroed() },
+            inner: std::ptr::null_mut(),
             settings: ipl_settings,
         };
 
         unsafe {
-            match ffi::iplSceneCreate(context.inner, &mut scene.settings, &mut scene.inner) {
+            match ffi::iplSceneCreate(context.inner_raw(), &mut scene.settings, scene.inner_mut()) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(scene),
                 err => Err(SteamAudioError::IPLError(err)),
             }
         }
     }
 
-    pub unsafe fn inner(&self) -> ffi::IPLScene {
-        self.inner
-    }
-
     pub fn commit(&mut self) {
         unsafe {
-            ffi::iplSceneCommit(self.inner);
+            ffi::iplSceneCommit(self.inner_raw());
         }
     }
 
     pub fn add_static_mesh(&self, static_mesh: &StaticMesh) {
         unsafe {
-            ffi::iplStaticMeshAdd(static_mesh.inner, self.inner);
+            ffi::iplStaticMeshAdd(static_mesh.inner_raw(), self.inner_raw());
         }
     }
 }
@@ -102,7 +112,7 @@ impl Scene {
 impl Drop for Scene {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplSceneRelease(&mut self.inner);
+            ffi::iplSceneRelease(self.inner_mut());
         }
     }
 }
