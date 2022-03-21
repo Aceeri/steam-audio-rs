@@ -160,6 +160,21 @@ pub struct DirectEffect {
     channels: u16,
 }
 
+
+unsafe impl Send for DirectEffect {}
+unsafe impl Sync for DirectEffect {}
+
+impl crate::SteamAudioObject for DirectEffect {
+    type Object = ffi::IPLDirectEffect;
+    fn inner_raw(&self) -> Self::Object {
+        assert!(!self.inner.is_null());
+        self.inner
+    }
+    fn inner_mut(&mut self) -> *mut Self::Object {
+        std::ptr::addr_of_mut!(self.inner)
+    }
+}
+
 impl DirectEffect {
     pub fn new(
         context: &Context,
@@ -167,7 +182,7 @@ impl DirectEffect {
         num_channels: u16,
     ) -> Result<Self, SteamAudioError> {
         let mut effect = Self {
-            inner: unsafe { std::mem::zeroed() },
+            inner: std::ptr::null_mut(),
             channels: num_channels,
         };
 
@@ -180,16 +195,12 @@ impl DirectEffect {
                 context.inner_raw(),
                 &mut audio_settings.into(),
                 &mut effect_settings,
-                &mut effect.inner,
+                effect.inner_mut(),
             ) {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(effect),
                 err => Err(SteamAudioError::IPLError(err)),
             }
         }
-    }
-
-    pub unsafe fn inner(&self) -> ffi::IPLDirectEffect {
-        self.inner
     }
 
     pub fn apply_to_buffer(
@@ -218,7 +229,7 @@ impl DirectEffect {
 
         unsafe {
             let _effect_state = ffi::iplDirectEffectApply(
-                self.inner,
+                self.inner_raw(),
                 &mut ipl_params,
                 &mut input_ffi_buffer,
                 &mut output_ffi_buffer,
@@ -247,7 +258,7 @@ impl DirectEffect {
 impl Drop for DirectEffect {
     fn drop(&mut self) {
         unsafe {
-            ffi::iplDirectEffectRelease(&mut self.inner);
+            ffi::iplDirectEffectRelease(self.inner_mut());
         }
     }
 }

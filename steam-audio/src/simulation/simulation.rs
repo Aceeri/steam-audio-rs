@@ -169,8 +169,8 @@ impl crate::SteamAudioObject for Simulator {
         assert!(!self.inner.is_null());
         self.inner
     }
-    fn inner_mut(&mut self) -> &mut Self::Object {
-        &mut self.inner
+    fn inner_mut(&mut self) -> *mut Self::Object {
+        std::ptr::addr_of_mut!(self.inner)
     }
 }
 

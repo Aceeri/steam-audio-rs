@@ -17,7 +17,7 @@ pub trait SteamAudioObject: Send + Sync {
     //
     // For example when we create a context we want the address
     // of where we want the context to go.
-    fn inner_mut(&mut self) -> &mut Self::Object;
+    fn inner_mut(&mut self) -> *mut Self::Object;
 }
 
 //pub use effect::ambisonics::ambisonic_order_channels;
