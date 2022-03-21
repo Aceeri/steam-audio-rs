@@ -157,18 +157,18 @@ impl From<ffi::IPLDirectEffectParams> for DirectEffectParams {
 
 pub struct DirectEffect {
     inner: ffi::IPLDirectEffect,
-    channels: usize,
+    channels: u16,
 }
 
 impl DirectEffect {
     pub fn new(
         context: &Context,
         audio_settings: &AudioSettings,
-        num_channels: u32,
+        num_channels: u16,
     ) -> Result<Self, SteamAudioError> {
         let mut effect = Self {
             inner: unsafe { std::mem::zeroed() },
-            channels: num_channels as usize,
+            channels: num_channels,
         };
 
         let mut effect_settings = ffi::IPLDirectEffectSettings {
@@ -195,15 +195,24 @@ impl DirectEffect {
     pub fn apply_to_buffer(
         &self,
         params: &DirectEffectParams,
-        mut frame: FFIAudioBufferFrame,
-        output_buffer: &mut AudioBuffer,
+        mut frame: DeinterleavedFrame,
+        output_buffer: &mut DeinterleavedFrame,
     ) -> Result<(), SteamAudioError> {
+        use rodio::Source;
         assert_eq!(frame.channels(), self.channels);
         assert_eq!(output_buffer.channels(), self.channels);
 
-        let mut output_ffi_buffer = unsafe { output_buffer.ffi_buffer_null() };
-        let mut data_ptrs = unsafe { output_buffer.data_ptrs() };
-        output_ffi_buffer.data = data_ptrs.as_mut_ptr();
+        let mut input_ffi_buffer = ffi::IPLAudioBuffer {
+            numChannels: frame.channels() as i32,
+            numSamples: frame.frame_size() as i32,
+            data: unsafe { frame.ptrs() },
+        };
+
+        let mut output_ffi_buffer = ffi::IPLAudioBuffer {
+            numChannels: output_buffer.channels() as i32,
+            numSamples: output_buffer.frame_size() as i32,
+            data: unsafe { output_buffer.ptrs() },
+        };
 
         let mut ipl_params: ffi::IPLDirectEffectParams = params.into();
 
@@ -211,7 +220,7 @@ impl DirectEffect {
             let _effect_state = ffi::iplDirectEffectApply(
                 self.inner,
                 &mut ipl_params,
-                &mut frame.0,
+                &mut input_ffi_buffer,
                 &mut output_ffi_buffer,
             );
         }
@@ -223,10 +232,13 @@ impl DirectEffect {
         &self,
         audio_settings: &AudioSettings,
         params: &DirectEffectParams,
-        frame: FFIAudioBufferFrame,
-    ) -> Result<AudioBuffer, SteamAudioError> {
-        let mut output_buffer =
-            AudioBuffer::frame_buffer_with_channels(audio_settings, self.channels);
+        frame: DeinterleavedFrame,
+    ) -> Result<DeinterleavedFrame, SteamAudioError> {
+        let mut output_buffer = DeinterleavedFrame::new(
+            audio_settings.frame_size() as usize,
+            self.channels as u16,
+            audio_settings.sampling_rate(),
+        );
         self.apply_to_buffer(params, frame, &mut output_buffer)?;
         Ok(output_buffer)
     }

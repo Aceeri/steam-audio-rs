@@ -1,146 +1,130 @@
+use rodio::Source;
 use steam_audio_sys::ffi;
 
 use crate::prelude::AudioSettings;
 
-#[derive(Debug, Clone)]
-pub struct AudioBuffer {
-    pub data: Vec<Vec<f32>>,
-    frame_size: usize,
-    sample_rate: u32,
-}
+use std::fmt;
 
-impl AudioBuffer {
-    pub fn empty(settings: &AudioSettings) -> Self {
-        AudioBuffer {
-            data: Vec::new(),
-            frame_size: settings.frame_size() as usize,
-            sample_rate: settings.sampling_rate() as u32,
-        }
-    }
-
-    pub fn frame_buffer_with_channels(settings: &AudioSettings, channels: usize) -> Self {
-        let frame_size = settings.frame_size() as usize;
-        AudioBuffer {
-            data: vec![vec![0.0; frame_size]; channels],
-            frame_size: frame_size,
-            sample_rate: settings.sampling_rate() as u32,
-        }
-    }
-
-    pub fn from_raw_pcm(settings: &AudioSettings, data: Vec<Vec<f32>>) -> Self {
-        AudioBuffer {
-            data: data,
-            frame_size: settings.frame_size() as usize,
-            sample_rate: settings.sampling_rate() as u32,
-        }
-    }
-
-    pub fn total_samples(&self) -> usize {
-        self.data.get(0).unwrap_or(&Vec::new()).len()
-    }
-
-    pub fn frames(&self) -> usize {
-        self.total_samples() / self.frame_size
-    }
-
-    pub fn channels(&self) -> usize {
-        self.data.len()
-    }
-
-    pub unsafe fn data_ptrs(&self) -> Vec<*mut f32> {
-        self.data.iter().map(|v| v.as_ptr() as *mut _).collect()
-    }
-
-    pub unsafe fn ffi_buffer_null(&self) -> ffi::IPLAudioBuffer {
-        ffi::IPLAudioBuffer {
-            numChannels: self.channels() as i32,
-            numSamples: self.frame_size as i32,
-            data: std::ptr::null_mut(),
-        }
-    }
-
-    pub fn time_seconds(&self, audio_settings: &AudioSettings) -> f64 {
-        self.total_samples() as f64 / audio_settings.sampling_rate() as f64
-    }
-
-    pub fn current_frame<'a>(&'a self) -> (Vec<*mut f32>, FFIAudioBufferFrame<'a>) {
-        let mut ipl_buffer = unsafe { self.ffi_buffer_null() };
-        let mut ptrs = unsafe { self.data_ptrs() };
-        ipl_buffer.data = ptrs.as_mut_ptr();
-
-        (ptrs, FFIAudioBufferFrame(ipl_buffer, PhantomData))
-    }
-}
-
-impl<'a> IntoIterator for &'a AudioBuffer {
-    type Item = FFIAudioBufferFrame<'a>;
-    type IntoIter = FFIAudioBufferIterator<'a>;
-    fn into_iter(self) -> Self::IntoIter {
-        Self::IntoIter::new(self)
-    }
-}
-
-pub struct FFIAudioBufferIterator<'a> {
-    buffer: &'a AudioBuffer,
+#[derive(Clone)]
+pub struct DeinterleavedFrame {
+    pub current_frame: Vec<Vec<f32>>,
     ptrs: Vec<*mut f32>,
-    current: Option<usize>,
-    frames: usize,
-    pub(crate) inner: ffi::IPLAudioBuffer,
+    sample_rate: u32,
+    channel_offset: u16,
+    frame_offset: usize,
 }
 
-impl<'a> FFIAudioBufferIterator<'a> {
-    pub fn new(buffer: &'a AudioBuffer) -> Self {
-        let mut ipl_buffer = unsafe { buffer.ffi_buffer_null() };
-        let mut ptrs = unsafe { buffer.data_ptrs() };
-        ipl_buffer.data = ptrs.as_mut_ptr();
-
-        Self {
-            buffer: buffer,
-            ptrs: ptrs,
-            current: None,
-            frames: buffer.frames(),
-            inner: ipl_buffer,
-        }
+impl fmt::Debug for DeinterleavedFrame {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use rodio::Source;
+        formatter
+            .debug_struct("DeinterleavedFrame")
+            .field("channels", &self.channels())
+            .field("sample_rate", &self.sample_rate())
+            .field("frame_size", &self.frame_size())
+            .finish()
     }
 }
 
-use std::marker::PhantomData;
+impl DeinterleavedFrame {
+    pub fn new(frame_size: usize, channels: u16, sample_rate: u32) -> Self {
+        let mut frame = Self {
+            current_frame: vec![vec![0.0; frame_size]; channels as usize],
+            ptrs: Vec::new(),
+            sample_rate: sample_rate,
+            channel_offset: 0,
+            frame_offset: 0,
+        };
 
-#[derive(Debug)]
-pub struct FFIAudioBufferFrame<'a>(pub ffi::IPLAudioBuffer, PhantomData<&'a ()>);
-
-impl<'a> FFIAudioBufferFrame<'a> {
-    pub fn samples(&self) -> usize {
-        self.0.numSamples as usize
+        frame.ptrs = frame
+            .current_frame
+            .iter()
+            .map(|d| d.as_ptr() as *mut _)
+            .collect();
+        frame
     }
 
-    pub fn channels(&self) -> usize {
-        self.0.numChannels as usize
+    pub fn from_source<S, I>(frame_size: usize, source: &mut S) -> Self
+    where
+        I: rodio::Sample,
+        S: rodio::Source + Iterator<Item = I>,
+    {
+        let mut frame = Self::new(frame_size, source.channels(), source.sample_rate());
+        frame.push_source(source);
+        frame
     }
-}
 
-impl<'a> Iterator for FFIAudioBufferIterator<'a> {
-    type Item = FFIAudioBufferFrame<'a>;
-    fn next(&mut self) -> Option<Self::Item> {
-        let frame = FFIAudioBufferFrame(self.inner, PhantomData);
+    pub fn push_source<S, I>(&mut self, source: &mut S) -> bool
+    where
+        I: rodio::Sample,
+        S: rodio::Source + Iterator<Item = I>,
+    {
+        let mut channel = 0;
+        let mut frame = 0;
 
-        if let Some(index) = self.current {
-            if index < self.frames - 1 {
-                // Move the pointers ahead 1 frame size.
-                unsafe {
-                    for ptr in &mut self.ptrs {
-                        *ptr = ptr.offset(self.buffer.frame_size as isize);
-                    }
+        while let Some(sample) = source.next() {
+            self.current_frame[channel][frame] = sample.to_f32();
+
+            if channel as u16 >= self.channels() - 1 {
+                channel = 0;
+
+                if frame >= self.frame_size() - 1 {
+                    return true;
                 }
 
-                self.current = Some(index + 1);
-                Some(frame)
+                frame += 1;
             } else {
-                None
+                channel += 1;
             }
-        } else {
-            self.current = Some(0);
-            Some(frame)
         }
+
+        false
+    }
+
+    pub fn frame_size(&self) -> usize {
+        self.current_frame.get(0).map(|d| d.len()).unwrap_or(0)
+    }
+
+    pub unsafe fn ptrs(&mut self) -> *mut *mut f32 {
+        self.ptrs.as_mut_ptr()
+    }
+}
+
+impl rodio::Source for DeinterleavedFrame {
+    fn current_frame_len(&self) -> Option<usize> {
+        Some(self.frame_size())
+    }
+
+    fn channels(&self) -> u16 {
+        self.current_frame.len() as u16
+    }
+
+    fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
+
+    fn total_duration(&self) -> Option<std::time::Duration> {
+        None
+    }
+}
+
+impl Iterator for DeinterleavedFrame {
+    type Item = f32;
+    fn next(&mut self) -> Option<Self::Item> {
+        let sample = self
+            .current_frame
+            .get(self.channel_offset as usize)
+            .map(|channel| channel.get(self.frame_offset))
+            .flatten()
+            .cloned();
+
+        if self.channels() == self.channel_offset {
+            self.channel_offset = 0;
+            self.frame_offset += 1;
+        } else {
+            self.channel_offset += 1;
+        }
+
+        sample
     }
 }

@@ -85,13 +85,12 @@ impl Context {
 
         unsafe {
             match ffi::iplContextCreate(&mut context.settings, context.inner_mut()) {
-                ffi::IPLerror::IPL_STATUS_SUCCESS => {},
+                ffi::IPLerror::IPL_STATUS_SUCCESS => {}
                 err => return Err(SteamAudioError::IPLError(err)),
             };
-            
+
             Ok(context)
         }
-
     }
 
     pub fn retain(&self) -> Context {

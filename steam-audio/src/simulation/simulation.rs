@@ -174,12 +174,8 @@ impl crate::SteamAudioObject for Simulator {
     }
 }
 
-
 impl Simulator {
-    pub fn new(
-        context: &Context,
-        settings: &SimulationSettings,
-    ) -> Result<Self, SteamAudioError> {
+    pub fn new(context: &Context, settings: &SimulationSettings) -> Result<Self, SteamAudioError> {
         let ipl_settings: ffi::IPLSimulationSettings = settings.into();
         let mut simulator = Self {
             inner: std::ptr::null_mut(),

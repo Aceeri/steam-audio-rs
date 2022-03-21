@@ -71,7 +71,6 @@ impl crate::SteamAudioObject for StaticMesh {
     }
 }
 
-
 impl StaticMesh {
     pub fn new(scene: &Scene, settings: StaticMeshSettings) -> Result<Self, SteamAudioError> {
         let mut mesh = Self {

@@ -58,7 +58,8 @@ impl Source {
         let mut ipl_settings: ffi::IPLSourceSettings = settings.into();
 
         unsafe {
-            match ffi::iplSourceCreate(simulator.inner_raw(), &mut ipl_settings, source.inner_mut()) {
+            match ffi::iplSourceCreate(simulator.inner_raw(), &mut ipl_settings, source.inner_mut())
+            {
                 ffi::IPLerror::IPL_STATUS_SUCCESS => Ok(source),
                 err => Err(SteamAudioError::IPLError(err)),
             }

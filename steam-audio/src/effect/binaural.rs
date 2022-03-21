@@ -69,15 +69,24 @@ impl BinauralEffect {
     pub fn apply_to_buffer(
         &self,
         params: &BinauralParams,
-        mut frame: FFIAudioBufferFrame,
-        output_buffer: &mut AudioBuffer,
+        mut frame: &mut DeinterleavedFrame,
+        output_buffer: &mut DeinterleavedFrame,
     ) -> Result<(), SteamAudioError> {
+        use rodio::Source;
         assert_eq!(frame.channels(), 1);
         assert_eq!(output_buffer.channels(), 2);
 
-        let mut output_ffi_buffer = unsafe { output_buffer.ffi_buffer_null() };
-        let mut data_ptrs = unsafe { output_buffer.data_ptrs() };
-        output_ffi_buffer.data = data_ptrs.as_mut_ptr();
+        let mut input_ffi_buffer = ffi::IPLAudioBuffer {
+            numChannels: frame.channels() as i32,
+            numSamples: frame.frame_size() as i32,
+            data: unsafe { frame.ptrs() },
+        };
+
+        let mut output_ffi_buffer = ffi::IPLAudioBuffer {
+            numChannels: output_buffer.channels() as i32,
+            numSamples: output_buffer.frame_size() as i32,
+            data: unsafe { output_buffer.ptrs() },
+        };
 
         let mut ipl_params = params.merge(self.hrtf);
 
@@ -85,7 +94,7 @@ impl BinauralEffect {
             let _effect_state = ffi::iplBinauralEffectApply(
                 self.inner,
                 &mut ipl_params,
-                &mut frame.0,
+                &mut input_ffi_buffer,
                 &mut output_ffi_buffer,
             );
         }
@@ -97,9 +106,13 @@ impl BinauralEffect {
         &self,
         audio_settings: &AudioSettings,
         params: &BinauralParams,
-        frame: FFIAudioBufferFrame,
-    ) -> Result<AudioBuffer, SteamAudioError> {
-        let mut output_buffer = AudioBuffer::frame_buffer_with_channels(audio_settings, 2);
+        frame: &mut DeinterleavedFrame,
+    ) -> Result<DeinterleavedFrame, SteamAudioError> {
+        let mut output_buffer = DeinterleavedFrame::new(
+            audio_settings.frame_size() as usize,
+            2,
+            audio_settings.sampling_rate(),
+        );
         self.apply_to_buffer(params, frame, &mut output_buffer)?;
         Ok(output_buffer)
     }

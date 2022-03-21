@@ -13,23 +13,38 @@ fn binaural_effect(
     context: &Context,
     audio_settings: &AudioSettings,
     hrtf: &HRTF,
-    audio_buffer: AudioBuffer,
+    mut decoder: rodio::Decoder<std::fs::File>,
 ) -> Result<(), Box<dyn Error>> {
+    let mut input_buffer = DeinterleavedFrame::new(
+        audio_settings.frame_size() as usize,
+        1,
+        audio_settings.sampling_rate(),
+    );
+
+    input_buffer.push_source(&mut decoder);
+
     let mut output: Vec<Vec<f32>> = vec![vec![]; 2];
-    let mut output_buffer = AudioBuffer::frame_buffer_with_channels(&audio_settings, 2);
-    let frame_length = audio_buffer.frames();
+    let mut output_buffer = DeinterleavedFrame::new(
+        audio_settings.frame_size() as usize,
+        2,
+        audio_settings.sampling_rate(),
+    );
+
+    let mut frame_index = 0;
+    let frame_length = input_buffer.frame_size();
 
     let binaural_effect = BinauralEffect::new(&context, &audio_settings, &hrtf)?;
-    for (frame_index, frame) in audio_buffer.into_iter().enumerate() {
-        let time = (frame_index as f32 / frame_length as f32) * std::f32::consts::TAU * 5.0;
+    while input_buffer.push_source(&mut decoder) {
+        let time = (frame_index as f32 / frame_length as f32) * std::f32::consts::TAU * 15.0;
 
         let mut params = BinauralParams::default();
         params.interpolation = HRTFInterpolation::Bilinear;
         params.direction = Vec3::new(time.cos(), 0.0, time.sin());
 
-        binaural_effect.apply_to_buffer(&params, frame, &mut output_buffer)?;
+        binaural_effect.apply_to_buffer(&params, &mut input_buffer, &mut output_buffer)?;
 
-        steam_audio::extend_deinterleaved(&mut output, &output_buffer.data);
+        steam_audio::extend_deinterleaved(&mut output, &output_buffer.current_frame);
+        frame_index += 1;
     }
 
     let filestem = file_stem(FILENAME);
@@ -127,9 +142,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let hrtf_settings = HRTFSettings::default();
     let hrtf = HRTF::new(&context, &audio_settings, &hrtf_settings)?;
 
-    let audio = steam_audio::read_ogg(FILENAME)?;
-    let audio_buffer = AudioBuffer::from_raw_pcm(&audio_settings, vec![audio]);
-    binaural_effect(&context, &audio_settings, &hrtf, audio_buffer.clone())?;
+    let file = std::fs::File::open(FILENAME)?;
+    let source = rodio::Decoder::new(file)?;
+    binaural_effect(&context, &audio_settings, &hrtf, source)?;
     //ambisonics_effect(&context, &audio_settings, &hrtf, audio_buffer.clone())?;
 
     Ok(())
