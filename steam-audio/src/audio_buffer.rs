@@ -85,6 +85,10 @@ impl DeinterleavedFrame {
         self.current_frame.get(0).map(|d| d.len()).unwrap_or(0)
     }
 
+    pub fn channels(&self) -> u16 {
+        self.current_frame.len() as u16
+    }
+
     pub unsafe fn ptrs(&mut self) -> *mut *mut f32 {
         self.ptrs.as_mut_ptr()
     }
