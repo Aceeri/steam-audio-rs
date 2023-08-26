@@ -82,7 +82,7 @@ impl crate::SteamAudioObject for Scene {
 
 impl Scene {
     pub fn new(context: &mut Context, settings: &SceneSettings) -> Result<Self, SteamAudioError> {
-        let mut ipl_settings: ffi::IPLSceneSettings = settings.into();
+        let ipl_settings: ffi::IPLSceneSettings = settings.into();
         let mut scene = Self {
             inner: std::ptr::null_mut(),
             settings: ipl_settings,

@@ -89,7 +89,6 @@ impl From<ffi::IPLTransmissionType> for TransmissionType {
             ffi::IPLTransmissionType::IPL_TRANSMISSIONTYPE_FREQDEPENDENT => {
                 Self::FrequencyDependent
             }
-            _ => Self::default(),
         }
     }
 }
@@ -160,7 +159,6 @@ pub struct DirectEffect {
     channels: u16,
 }
 
-
 unsafe impl Send for DirectEffect {}
 unsafe impl Sync for DirectEffect {}
 
@@ -209,7 +207,6 @@ impl DirectEffect {
         mut frame: DeinterleavedFrame,
         output_buffer: &mut DeinterleavedFrame,
     ) -> Result<(), SteamAudioError> {
-        use rodio::Source;
         assert_eq!(frame.channels(), self.channels);
         assert_eq!(output_buffer.channels(), self.channels);
 

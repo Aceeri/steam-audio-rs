@@ -1,8 +1,3 @@
-use rodio::Source;
-use steam_audio_sys::ffi;
-
-use crate::prelude::AudioSettings;
-
 use std::fmt;
 
 #[derive(Clone)]

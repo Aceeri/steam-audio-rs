@@ -1,15 +1,14 @@
 extern crate lewton;
 extern crate steam_audio_sys;
 
-use lewton::inside_ogg::{read_headers, OggStreamReader};
+use lewton::inside_ogg::OggStreamReader;
 use steam_audio_sys::ffi::*;
 
 use std::error::Error;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::os::raw::c_char;
-use std::ptr::addr_of_mut;
-use std::{ptr, slice};
+use std::ptr;
 
 unsafe extern "C" fn log_callback(level: IPLLogLevel, message: *const ::std::os::raw::c_char) {
     let c_str: &CStr = CStr::from_ptr(message);

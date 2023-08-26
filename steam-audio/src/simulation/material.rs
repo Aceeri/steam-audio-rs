@@ -1,7 +1,5 @@
 use steam_audio_sys::ffi;
 
-use crate::prelude::*;
-
 /// Acoustic properties of a surface.
 #[derive(Debug, Clone)]
 pub struct Material {
