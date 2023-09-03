@@ -1,8 +1,3 @@
-use rodio::Source;
-use steam_audio_sys::ffi;
-
-use crate::prelude::AudioSettings;
-
 use std::fmt;
 
 #[derive(Clone)]
@@ -83,6 +78,10 @@ impl DeinterleavedFrame {
 
     pub fn frame_size(&self) -> usize {
         self.current_frame.get(0).map(|d| d.len()).unwrap_or(0)
+    }
+
+    pub fn channels(&self) -> u16 {
+        self.current_frame.len() as u16
     }
 
     pub unsafe fn ptrs(&mut self) -> *mut *mut f32 {

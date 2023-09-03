@@ -79,7 +79,7 @@ impl BinauralEffect {
     pub fn apply_to_buffer(
         &self,
         params: &BinauralParams,
-        mut frame: &mut DeinterleavedFrame,
+        frame: &mut DeinterleavedFrame,
         output_buffer: &mut DeinterleavedFrame,
     ) -> Result<(), SteamAudioError> {
         assert_eq!(frame.channels(), 1);
