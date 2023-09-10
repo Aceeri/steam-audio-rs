@@ -1,22 +1,20 @@
 use steam_audio_sys::ffi;
 
-use glam::Vec3;
-
 #[derive(Debug, Clone)]
 pub struct Orientation {
-    pub right: Vec3,
-    pub up: Vec3,
-    pub ahead: Vec3,
-    pub origin: Vec3,
+    pub right: [f32; 3],
+    pub up: [f32; 3],
+    pub ahead: [f32; 3],
+    pub origin: [f32; 3],
 }
 
 impl Default for Orientation {
     fn default() -> Self {
         Self {
-            right: Vec3::X,
-            up: Vec3::Y,
-            ahead: -Vec3::Z,
-            origin: Vec3::ZERO,
+            right: [1.0, 0.0, 0.0],
+            up: [0.0, 1.0, 0.0],
+            ahead: [0.0, 0.0, -1.0],
+            origin: [0.0, 0.0, 0.0],
         }
     }
 }

@@ -3,7 +3,7 @@ use steam_audio_sys::ffi;
 use crate::prelude::*;
 
 pub struct BinauralParams {
-    pub direction: glam::Vec3,
+    pub direction: [f32; 3],
     pub interpolation: HRTFInterpolation,
     pub spatial_blend: f32,
 }
@@ -11,7 +11,7 @@ pub struct BinauralParams {
 impl Default for BinauralParams {
     fn default() -> Self {
         Self {
-            direction: glam::Vec3::ZERO,
+            direction: [0.0; 3],
             interpolation: HRTFInterpolation::NearestNeighbor,
             spatial_blend: 1.0,
         }

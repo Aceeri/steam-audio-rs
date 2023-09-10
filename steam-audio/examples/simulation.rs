@@ -1,4 +1,3 @@
-use glam::Vec3;
 use steam_audio::{
     prelude::*,
     simulation::{simulation::SimulationSharedInputs, source::OcclusionType},
@@ -46,10 +45,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mesh_settings = StaticMeshSettings {
         vertices: vec![
-            Vec3::new(-5.0, 5.0, 0.25),
-            Vec3::new(-5.0, -5.0, 0.25),
-            Vec3::new(5.0, -5.0, 0.25),
-            Vec3::new(5.0, 5.0, 0.25),
+            [-5.0, 5.0, 0.25],
+            [-5.0, -5.0, 0.25],
+            [5.0, -5.0, 0.25],
+            [5.0, 5.0, 0.25],
         ],
         triangles: vec![[0, 1, 2], [0, 2, 3]],
         materials: vec![steam_audio::materials::GENERIC],
@@ -67,7 +66,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let source_settings = &SourceSettings::default();
     let source = Source::new(&simulator, &source_settings)?;
 
-    let listener = Vec3::new(0.0, 0.0, 0.0);
+    let listener = [0.0; 3];
 
     simulator.set_shared_inputs(
         SimulationFlags::all(),
