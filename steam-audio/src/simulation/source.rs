@@ -297,7 +297,7 @@ impl Into<ffi::IPLSimulationInputs> for &SimulationInputs {
                 type_: ffi::IPLBakedDataType::IPL_BAKEDDATATYPE_PATHING,
                 variation: ffi::IPLBakedDataVariation::IPL_BAKEDDATAVARIATION_DYNAMIC,
                 endpointInfluence: ffi::IPLSphere {
-                    center: glam::Vec3::ZERO.into(),
+                    center: [0.0; 3].into(),
                     radius: 0.0,
                 },
             },

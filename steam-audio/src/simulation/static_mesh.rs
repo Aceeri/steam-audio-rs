@@ -1,11 +1,10 @@
-use glam::Vec3;
 use steam_audio_sys::ffi;
 
 use crate::prelude::*;
 
 #[derive(Debug, Clone)]
 pub struct StaticMeshSettings {
-    pub vertices: Vec<Vec3>,
+    pub vertices: Vec<[f32; 3]>,
     pub triangles: Vec<[i32; 3]>,
     pub materials: Vec<Material>,
     pub material_indices: Vec<i32>,

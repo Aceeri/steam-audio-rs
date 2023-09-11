@@ -1,6 +1,5 @@
 extern crate lewton;
 
-use glam::Vec3;
 //use steam_audio::effect::ambisonics::decode::AmbisonicsDecodeSettings;
 use steam_audio::prelude::*;
 
@@ -39,7 +38,7 @@ fn binaural_effect(
 
         let mut params = BinauralParams::default();
         params.interpolation = HRTFInterpolation::Bilinear;
-        params.direction = Vec3::new(time.cos(), 0.0, time.sin());
+        params.direction = [time.cos(), 0.0, time.sin()];
 
         binaural_effect.apply_to_buffer(&params, &mut input_buffer, &mut output_buffer)?;
 
