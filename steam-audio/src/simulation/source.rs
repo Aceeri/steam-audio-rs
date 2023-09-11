@@ -131,6 +131,27 @@ impl Into<ffi::IPLDistanceAttenuationModel> for DistanceAttenuationModel {
     }
 }
 
+impl DistanceAttenuationModel {
+    pub fn calculate(
+        context: &Context,
+        source_position: [f32; 3],
+        listener_position: [f32; 3],
+        model: DistanceAttenuationModel,
+    ) -> f32 {
+        let mut model: ffi::IPLDistanceAttenuationModel = model.into();
+        let model_pointer = &mut model as *mut _;
+
+        unsafe {
+            ffi::iplDistanceAttenuationCalculate(
+                context.inner_raw(),
+                source_position.into(),
+                listener_position.into(),
+                model_pointer,
+            )
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum AirAbsorptionModel {
     Default,
@@ -167,6 +188,32 @@ impl Into<ffi::IPLAirAbsorptionModel> for AirAbsorptionModel {
     }
 }
 
+impl AirAbsorptionModel {
+    pub fn calculate(
+        context: &Context,
+        source_position: [f32; 3],
+        listener_position: [f32; 3],
+        model: AirAbsorptionModel,
+    ) -> [f32; 3] {
+        let mut model: ffi::IPLAirAbsorptionModel = model.into();
+        let model_pointer = &mut model as *mut _;
+
+        let mut air_absorption: [f32; 3] = [0.0; 3];
+
+        unsafe {
+            ffi::iplAirAbsorptionCalculate(
+                context.inner_raw(),
+                source_position.into(),
+                listener_position.into(),
+                model_pointer,
+                air_absorption.as_mut_ptr(),
+            )
+        }
+
+        air_absorption
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Directivity {
     pub dipole_weight: f32,
@@ -189,6 +236,27 @@ impl Into<ffi::IPLDirectivity> for Directivity {
             dipoleWeight: self.dipole_weight,
             callback: None,
             userData: std::ptr::null_mut(),
+        }
+    }
+}
+
+impl Directivity {
+    pub fn calculate(
+        context: &Context,
+        source_transform: Orientation,
+        listener_position: [f32; 3],
+        model: Directivity,
+    ) -> f32 {
+        let mut model: ffi::IPLDirectivity = model.into();
+        let model_pointer = &mut model as *mut _;
+
+        unsafe {
+            ffi::iplDirectivityCalculate(
+                context.inner_raw(),
+                source_transform.into(),
+                listener_position.into(),
+                model_pointer,
+            )
         }
     }
 }
