@@ -13,6 +13,7 @@ fn main() {
         .header("stdint.h")
         .header("headers/phonon.h")
         .header("headers/phonon_version.h")
+        .header("headers/steamaudio_fmod.h")
         .rustified_enum("IPL(.*)")
         .bitfield_enum("(.*)Flags");
 
