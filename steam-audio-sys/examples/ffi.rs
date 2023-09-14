@@ -119,7 +119,11 @@ fn main() {
         let mut hrtf = ptr::null_mut();
         let mut hrtf_settings = IPLHRTFSettings {
             type_: IPLHRTFType::IPL_HRTFTYPE_DEFAULT,
+            volume: 1.0,
             sofaFileName: file.as_ptr() as *const c_char,
+            sofaData: ptr::null_mut(),
+            sofaDataSize: 0,
+            normType: IPLHRTFNormType::IPL_HRTFNORMTYPE_NONE,
         };
 
         println!("{:?}", hrtf);
@@ -187,6 +191,7 @@ fn main() {
                 hrtf: hrtf,
                 interpolation: IPLHRTFInterpolation::IPL_HRTFINTERPOLATION_BILINEAR,
                 spatialBlend: 1.0,
+                peakDelays: ptr::null_mut(),
             };
 
             let mut output_audio_frame: Vec<f32> =
