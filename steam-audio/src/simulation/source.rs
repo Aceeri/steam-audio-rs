@@ -308,6 +308,7 @@ impl Into<ffi::IPLSimulationInputs> for &SimulationInputs {
             pathingOrder: self.pathing_order as i32,
             enableValidation: self.enabled_validation.into(),
             findAlternatePaths: self.find_alternate_paths.into(),
+            numTransmissionRays: 8,
         }
     }
 }

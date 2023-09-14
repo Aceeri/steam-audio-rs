@@ -19,30 +19,51 @@ impl Into<ffi::IPLHRTFInterpolation> for HRTFInterpolation {
     }
 }
 
+// TODO: Expose normType here.
 pub enum HRTFSettings {
-    Default,
-    SOFA(String),
+    Default {
+        volume: f32,
+    },
+    SOFA {
+        // TODO: Expose sofaData here.
+        path: String,
+        volume: f32,
+    },
 }
 
 impl Default for HRTFSettings {
     fn default() -> Self {
-        Self::Default
+        Self::Default { volume: 1.0 }
     }
 }
 
 impl Into<ffi::IPLHRTFSettings> for &HRTFSettings {
     fn into(self) -> ffi::IPLHRTFSettings {
-        let (type_, path) = match self {
-            HRTFSettings::Default => (ffi::IPLHRTFType::IPL_HRTFTYPE_DEFAULT, String::new()),
-            HRTFSettings::SOFA(path) => (ffi::IPLHRTFType::IPL_HRTFTYPE_SOFA, path.clone()),
+        let mut settings = ffi::IPLHRTFSettings {
+            type_: ffi::IPLHRTFType::IPL_HRTFTYPE_DEFAULT,
+            sofaFileName: std::ptr::null_mut(),
+            sofaData: std::ptr::null_mut(),
+            sofaDataSize: 0,
+            volume: 1.0,
+            normType: ffi::IPLHRTFNormType::IPL_HRTFNORMTYPE_NONE,
         };
 
-        let cstring = CString::new(path).expect("interior nul byte in path");
+        match self {
+            HRTFSettings::Default { volume } => {
+                settings.type_ = ffi::IPLHRTFType::IPL_HRTFTYPE_DEFAULT;
+                settings.volume = *volume;
+            }
+            HRTFSettings::SOFA { path, volume } => {
+                settings.type_ = ffi::IPLHRTFType::IPL_HRTFTYPE_SOFA;
+                settings.volume = *volume;
 
-        ffi::IPLHRTFSettings {
-            type_: type_,
-            sofaFileName: cstring.as_ptr(),
-        }
+                let path = CString::new(path.clone())
+                    .expect("interior nul byte in path");
+                settings.sofaFileName = path.as_ptr();
+            }
+        };
+
+        settings
     }
 }
 

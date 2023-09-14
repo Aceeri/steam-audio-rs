@@ -10,6 +10,7 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
 
     let builder = Builder::default()
+        .header("stdint.h")
         .header("headers/phonon.h")
         .header("headers/phonon_version.h")
         .rustified_enum("IPL(.*)")

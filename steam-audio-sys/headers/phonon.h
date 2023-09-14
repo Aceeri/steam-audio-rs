@@ -338,6 +338,7 @@ DECLARE_OPAQUE_HANDLE(IPLEmbreeDevice);
 /** Settings used to create an Embree device. */
 #if defined(__cplusplus) || defined(__DOXYGEN__)
 typedef struct {
+    IPLbyte reserved;
 } IPLEmbreeDeviceSettings;
 #else
 typedef void IPLEmbreeDeviceSettings;
@@ -574,6 +575,7 @@ DECLARE_OPAQUE_HANDLE(IPLRadeonRaysDevice);
 /** Settings used to create a Radeon Rays device. */
 #if defined(__cplusplus) || defined(__DOXYGEN__)
 typedef struct {
+    IPLbyte reserved;
 } IPLRadeonRaysDeviceSettings;
 #else
 typedef void IPLRadeonRaysDeviceSettings;
@@ -1346,13 +1348,38 @@ typedef enum {
     IPL_HRTFTYPE_SOFA
 } IPLHRTFType;
 
+/** Volume normalization types to use. */
+typedef enum {
+    /** No normalization. */
+    IPL_HRTFNORMTYPE_NONE,
+
+    /** Root-mean squared normalization. Normalize HRTF volume to ensure similar volume from all directions
+        based on root-mean-square value of each HRTF. */
+    IPL_HRTFNORMTYPE_RMS
+} IPLHRTFNormType;
+
 /** Settings used to create an HRTF object. */
 typedef struct {
     /** The type of HRTF to create. */
     IPLHRTFType type;
     
-    /** SOFA file from which to load HRTF data. Only for \c IPL_HRTFTYPE_SOFA. */
+    /** SOFA file from which to load HRTF data. Either \c sofaFileName or \c sofaData should be non-NULL. 
+        Only for \c IPL_HRTFTYPE_SOFA. */
     const char* sofaFileName;
+
+    /** Pointer to a buffer containing SOFA file data from which to load HRTF data. Either \c sofaFileName 
+        or \c sofaData should be non-NULL. Only for \c IPL_HRTFTYPE_SOFA. */
+    const uint8_t* sofaData;
+
+    /** Size (in bytes) of the buffer pointed to by \c sofaData. Only for \c IPL_HRTFTYPE_SOFA. */
+    int sofaDataSize;
+
+    /** Volume correction factor to apply to the loaded HRTF data. A value of 1.0 means the HRTF data will be used
+        without any change. */
+    float volume;
+
+    /** Normalization setting. No normalization will be applied when choosing \c IPL_HRTFNORMTYPE_NONE. */
+    IPLHRTFNormType normType;
 } IPLHRTFSettings;
 
 /** Creates an HRTF. 
@@ -1502,6 +1529,11 @@ typedef struct {
 
     /** The HRTF to use. */
     IPLHRTF hrtf;
+
+    /** Base address of an array into which to write the left- and right-ear peak delays for the HRTF used
+        to spatialize the input audio. Memory for this array must be allocated and managed by the caller.
+        Can be NULL, in which case peak delays will not be written. */
+    IPLfloat32* peakDelays;
 } IPLBinauralEffectParams;
 
 /** Creates a binaural effect.
@@ -1547,7 +1579,7 @@ IPLAPI void IPLCALL iplBinauralEffectReset(IPLBinauralEffect effect);
     \return \c IPL_AUDIOEFFECTSTATE_TAILREMAINING if any tail samples remain in the effect's internal buffers, or
             \c IPL_AUDIOEFFECTSTATE_TAILCOMPLETE otherwise.
 */
-IPLAPI IPLAudioEffectState IPLCALL iplBinauralEffectApply(IPLBinauralEffect effect, IPLBinauralEffectParams* params, const IPLAudioBuffer* in, IPLAudioBuffer* out);
+IPLAPI IPLAudioEffectState IPLCALL iplBinauralEffectApply(IPLBinauralEffect effect, IPLBinauralEffectParams* params, IPLAudioBuffer* in, IPLAudioBuffer* out);
 
 /** \} */
 
@@ -1650,7 +1682,8 @@ typedef struct {
 
 /** Parameters for applying an Ambisonics encode effect to an audio buffer. */
 typedef struct {
-    /** Unit vector pointing from the listener towards the source. */
+    /** Vector pointing from the listener towards the source. Need not be normalized; Steam Audio will automatically
+        normalize this vector. If a zero-length vector is passed, the output will be order 0 (omnidirectional). */
     IPLVector3 direction;
 
     /** Ambisonic order of the output buffer. May be less than the \c maxOrder specified when creating the effect,
@@ -2347,6 +2380,19 @@ DECLARE_OPAQUE_HANDLE(IPLPathEffect);
 typedef struct {
     /** The maximum Ambisonics order that will be used by output audio buffers. */
     IPLint32 maxOrder;
+
+    /** If \c IPL_TRUE, then this effect will render spatialized audio into the output buffer. If \c IPL_FALSE,
+        this effect will render un-spatialized (and un-rotated) Ambisonic audio. Setting this to \c IPL_FALSE is
+        mainly useful only if you plan to mix multiple Ambisonic buffers and/or apply additional processing to
+        the Ambisonic audio before spatialization. If you plan to immediately spatialize the output of the path
+        effect, setting this value to \c IPL_TRUE can result in significant performance improvements. */
+    IPLbool spatialize;
+
+    /** The speaker layout to use when spatializing. Only used if \c spatialize is \c IPL_TRUE. */
+    IPLSpeakerLayout speakerLayout;
+
+    /** The HRTF to use when spatializing. Only used if \c spatialize is \c IPL_TRUE. */
+    IPLHRTF hrtf;
 } IPLPathEffectSettings;
 
 /** Parameters for applying a path effect to an audio buffer. */
@@ -2363,6 +2409,18 @@ typedef struct {
     /** Ambisonic order of the output buffer. May be less than the maximum order specified when creating the effect,
         in which case higher-order \c shCoeffs will be ignored, and CPU usage will be reduced. */
     IPLint32 order;
+
+    /** If \c IPL_TRUE, spatialize using HRTF-based binaural rendering. Only used if \c spatialize was set to
+        \c IPL_TRUE in \c IPLPathEffectSettings. */
+    IPLbool binaural;
+
+    /** The HRTF to use when spatializing. Only used if \c spatialize was set to \c IPL_TRUE in 
+        \c IPLPathEffectSettings and \c binaural is set to \c IPL_TRUE. */
+    IPLHRTF hrtf;
+
+    /** The position and orientation of the listener. Only used if \c spatialize was set to \c IPL_TRUE in
+        \c IPLPathEffectSettings and \c binaural is set to \c IPL_TRUE. */
+    IPLCoordinateSpace3 listener;
 } IPLPathEffectParams;
 
 /** Creates a path effect.
@@ -2720,7 +2778,8 @@ typedef struct {
         \c irradianceMinDistance, for the purposes of energy calculations. */
     IPLfloat32 irradianceMinDistance;
 
-    /** If using Radeon Rays, this is the number of probes for which data is baked simultaneously. */
+    /** If using Radeon Rays or if \c identifier.variation is \c IPL_BAKEDDATAVARIATION_STATICLISTENER, this is the 
+        number of probes for which data is baked simultaneously. */
     IPLint32 bakeBatchSize;
 
     /** The OpenCL device, if using Radeon Rays. */
@@ -2760,7 +2819,7 @@ typedef struct {
         visible. Increasing this value can result in simpler paths, at the cost of increased bake times. */
     IPLfloat32              visRange;
 
-    /** If the distance between two probes is greater than this value, the probes are considered to
+    /** If the length of the path between two probes is greater than this value, the probes are considered to
         not have any path between them. Increasing this value allows sound to propagate over greater
         distances, at the cost of increased bake times and memory usage. */
     IPLfloat32              pathRange;
@@ -3171,7 +3230,26 @@ typedef struct {
         geometry, path finding is re-run in real-time to find alternate paths that take into account the
         dynamic geometry. */
     IPLbool findAlternatePaths;
+
+    /** If simulating transmission, this is the maximum number of surfaces, starting from the closest
+        surface to the listener, whose transmission coefficients will be considered when calculating
+        the total amount of sound transmitted. Increasing this value will result in more accurate
+        results when multiple surfaces lie between the source and the listener, at the cost of
+        increased CPU usage. */
+    IPLint32 numTransmissionRays;
 } IPLSimulationInputs;
+
+/** Callback for visualizing valid path segments during call to \c iplSimulatorRunPathing.
+
+    You can use this to provide the user with visual feedback, like drawing each segment of a path.
+
+    \param  from        Position of starting probe.
+    \param  to          Position of ending probe.
+    \param  occluded    Occlusion status of ray segment between \c from to \c to.
+    \param  userData    Pointer to arbitrary user-specified data provided when calling the function that will
+                        call this callback.
+*/
+typedef void (IPLCALL* IPLPathingVisualizationCallback)(IPLVector3 from, IPLVector3 to, IPLbool occluded, void* userData);
 
 /** Simulation parameters that are not specific to any source. */
 typedef struct {
@@ -3201,6 +3279,13 @@ typedef struct {
         closer than \c irradianceMinDistance to the surface is assumed to be at a distance of
         \c irradianceMinDistance, for the purposes of energy calculations. */
     IPLfloat32 irradianceMinDistance;
+
+    /** Callback for visualizing valid path segments during call to \c iplSimulatorRunPathing.*/
+    IPLPathingVisualizationCallback pathingVisCallback;
+
+    /** Pointer to arbitrary user-specified data provided when calling the function that will
+        call this callback.*/
+    void* pathingUserData;
 } IPLSimulationSharedInputs;
 
 /** Simulation results for a source. */
@@ -3321,7 +3406,7 @@ IPLAPI void IPLCALL iplSimulatorRunReflections(IPLSimulator simulator);
     This function can be CPU intensive, and should be called from a separate thread in order to not
     block either the audio processing thread or the game's main update thread.
 
-    \param  simulator   The simulator being used.
+    \param  simulator       The simulator being used.
 */
 IPLAPI void IPLCALL iplSimulatorRunPathing(IPLSimulator simulator);
 

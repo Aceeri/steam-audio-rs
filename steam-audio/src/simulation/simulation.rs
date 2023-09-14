@@ -5,7 +5,7 @@ use bitflags::bitflags;
 use crate::{prelude::*, Orientation};
 
 bitflags! {
-    pub struct SimulationFlags: i32 {
+    pub struct SimulationFlags: u32 {
         const DIRECT = ffi::IPLSimulationFlags::IPL_SIMULATIONFLAGS_DIRECT.0;
         const REFLECTIONS = ffi::IPLSimulationFlags::IPL_SIMULATIONFLAGS_REFLECTIONS.0;
         const PATHING = ffi::IPLSimulationFlags::IPL_SIMULATIONFLAGS_PATHING.0;
@@ -284,6 +284,10 @@ impl Into<ffi::IPLSimulationSharedInputs> for &SimulationSharedInputs {
             duration: self.duration,
             order: self.order as i32,
             irradianceMinDistance: self.irradiance_min_distance,
+
+            // TODO: Expose these
+            pathingUserData: std::ptr::null_mut(),
+            pathingVisCallback: None,
         }
     }
 }

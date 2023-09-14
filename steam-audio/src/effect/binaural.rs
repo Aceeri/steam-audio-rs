@@ -25,6 +25,7 @@ impl BinauralParams {
             hrtf: hrtf,
             interpolation: self.interpolation.into(),
             spatialBlend: self.spatial_blend,
+            peakDelays: std::ptr::null_mut(),
         }
     }
 }
