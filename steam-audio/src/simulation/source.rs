@@ -133,12 +133,12 @@ impl Into<ffi::IPLDistanceAttenuationModel> for DistanceAttenuationModel {
 
 impl DistanceAttenuationModel {
     pub fn calculate(
-        self,
+        &self,
         context: &Context,
         source_position: [f32; 3],
         listener_position: [f32; 3],
     ) -> f32 {
-        let mut model: ffi::IPLDistanceAttenuationModel = self.into();
+        let mut model: ffi::IPLDistanceAttenuationModel = (*self).clone().into();
         let model_pointer = &mut model as *mut _;
 
         unsafe {
@@ -190,12 +190,12 @@ impl Into<ffi::IPLAirAbsorptionModel> for AirAbsorptionModel {
 
 impl AirAbsorptionModel {
     pub fn calculate(
-        self,
+        &self,
         context: &Context,
         source_position: [f32; 3],
         listener_position: [f32; 3],
     ) -> [f32; 3] {
-        let mut model: ffi::IPLAirAbsorptionModel = self.into();
+        let mut model: ffi::IPLAirAbsorptionModel = (*self).clone().into();
         let model_pointer = &mut model as *mut _;
 
         let mut air_absorption: [f32; 3] = [0.0; 3];
@@ -242,12 +242,12 @@ impl Into<ffi::IPLDirectivity> for Directivity {
 
 impl Directivity {
     pub fn calculate(
-        self,
+        &self,
         context: &Context,
         source_transform: Orientation,
         listener_position: [f32; 3],
     ) -> f32 {
-        let mut model: ffi::IPLDirectivity = self.into();
+        let mut model: ffi::IPLDirectivity = (*self).clone().into();
         let model_pointer = &mut model as *mut _;
 
         unsafe {
