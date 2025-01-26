@@ -5,7 +5,7 @@ use bitflags::bitflags;
 use crate::{prelude::*, Orientation};
 
 bitflags! {
-    pub struct SimulationFlags: u32 {
+    pub struct SimulationFlags: i32 {
         const DIRECT = ffi::IPLSimulationFlags::IPL_SIMULATIONFLAGS_DIRECT.0;
         const REFLECTIONS = ffi::IPLSimulationFlags::IPL_SIMULATIONFLAGS_REFLECTIONS.0;
         const PATHING = ffi::IPLSimulationFlags::IPL_SIMULATIONFLAGS_PATHING.0;

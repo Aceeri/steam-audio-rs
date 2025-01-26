@@ -5,7 +5,7 @@ use bitflags::bitflags;
 use crate::prelude::*;
 
 bitflags! {
-    pub struct DirectSimulationFlags: u32 {
+    pub struct DirectSimulationFlags: i32 {
         const DISTANCE_ATTENUATION = ffi::IPLDirectSimulationFlags::IPL_DIRECTSIMULATIONFLAGS_DISTANCEATTENUATION.0;
         const AIR_ABSORPTION = ffi::IPLDirectSimulationFlags::IPL_DIRECTSIMULATIONFLAGS_AIRABSORPTION.0;
         const DIRECTIVITY = ffi::IPLDirectSimulationFlags::IPL_DIRECTSIMULATIONFLAGS_DIRECTIVITY.0;
@@ -28,7 +28,7 @@ impl Into<ffi::IPLDirectSimulationFlags> for DirectSimulationFlags {
 
 bitflags! {
     /// What should be applied to the sound.
-    pub struct DirectEffectFlags: u32 {
+    pub struct DirectEffectFlags: i32 {
         const DISTANCE_ATTENUATION = ffi::IPLDirectEffectFlags::IPL_DIRECTEFFECTFLAGS_APPLYDISTANCEATTENUATION.0;
         const AIR_ABSORPTION = ffi::IPLDirectEffectFlags::IPL_DIRECTEFFECTFLAGS_APPLYAIRABSORPTION.0;
         const DIRECTIVITY = ffi::IPLDirectEffectFlags::IPL_DIRECTEFFECTFLAGS_APPLYDIRECTIVITY.0;
