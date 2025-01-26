@@ -1,6 +1,6 @@
 [package]
 name = "steam-audio-sys"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["germän gômez <germangb42@gmail.com>", "Connor McCluskey <conmcclusk@gmail.com>"]
 description = "Wrapper library for using steam audio in rust"
